@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useSignUpMutation } from "../../services/api/authApi";
+import { useSignUpMutation } from "../../services/api/user/authApi";
 
 // Define validation schema using Yup
 const SignupSchema = Yup.object().shape({
@@ -70,7 +70,7 @@ export const SignUp = () => {
               {errors.apiError && <div className="text-red-500 text-center">{errors.apiError}</div>}
 
               <div>
-                <label className="block text-sm">Name</label>
+                <label className="bk text-sm">Name</label>
                 <Field
                   name="name"
                   type="text"

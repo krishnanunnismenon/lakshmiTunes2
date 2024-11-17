@@ -2,6 +2,10 @@ import TempUser from "../models/tempUserModel.js";
 import User from '../models/userModel.js';
 import { generateOtp, sendOTPEmail } from "../utils/generateOTP.js";
 import bcrypt from 'bcryptjs';
+import { createAccessToken, createRefreshToken } from "../utils/jwtToken.js";
+import oAuth2client from "../utils/googleConfig.js";
+import jwt from 'jsonwebtoken'
+import {google} from 'googleapis'
 
 
 
@@ -107,5 +111,123 @@ export const resendOTP = async (req,res)=>{
         res.status(200).json({message:"New OTP sent successfully"})
     } catch (error) {
         res.status(500).json({message:"Error resending OTP",error: error.message})
+    }
+}
+
+export const signIn = async (req,res)=>{
+    const {email,password} = req.body;
+
+    try {
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(404).json({message:"User does not Exist"})
+        }
+
+        const validPassword = await bcrypt.compare(password,user.password)
+
+        if(!validPassword){
+            return res.status(401).json({message:"Invalid Password"});
+        }
+
+        const refreshToken = createRefreshToken(user)
+        const accessToken = createAccessToken(user)
+
+        res
+        .status(200)
+        .cookie("refreshToken",refreshToken,{
+            path:"/",
+            httpOnly:true,
+            sameSite: "none",
+            secure:true,
+            maxAge: 60 * 60 * 24 * 1000
+        })
+        .json({
+            success:true,
+            message: "You are Logged In",
+            accessToken,
+            data:{
+                user:{id:user._id,email:user.email,role:user.role},
+            }
+        })
+    } catch (error) {
+        return res.status(500).json({message:error.message})
+    }
+}
+
+export const googleLogin = async (req, res) => {
+    try {
+        
+        const { authCode:code } = req.body;
+        if (!code) {
+            return res.status(400).json({ message: 'Authorization code not provided' });
+        }
+
+  
+        const { tokens } = await oAuth2client.getToken(code);
+        oAuth2client.setCredentials(tokens);
+console.log(tokens)
+     
+        const oauth2 = google.oauth2('v2');
+        const { data: userInfo } = await oauth2.userinfo.get({ auth: oAuth2client });
+
+        if (!userInfo) {
+            return res.status(400).json({ message: 'Failed to fetch user information' });
+        }
+        
+
+        
+        const { email, name, picture } = userInfo;
+
+        let user = await User.findOne({ email });
+        if (!user) {
+           
+            user = await User.create({
+                email,
+                name,
+                avatar: picture,
+                provider: 'google', 
+            });
+        }
+
+       
+        const accessToken = createAccessToken(user);
+        const refreshToken = createRefreshToken(user)
+       
+        return res.status(200).json({
+            message: 'Login successful',
+            accessToken,
+            refreshToken,
+            user: {
+                id: user._id,
+                email: user.email,
+                name: user.name,
+                avatar: user.avatar,
+            },
+        });
+    } catch (error) {
+        console.error('Google Login Error:', error.message);
+        return res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+export const refreshToken = async(req,res)=>{
+    const refreshToken = req.cookies?.refreshToken;
+    
+    if(!refreshToken){
+        return res.status(401).json({message:"Refresh Token not found"});
+    }
+
+    try {
+        const decoded =await jwt.verify(refreshToken,process.env.REFRESH_TOKEN);
+        const user  = await User.findById(decoded.userId);
+        const accessToken = createAccessToken(user);
+
+        res.json({accessToken})
+
+        res
+      .status(403)
+      .json({ message: "Invalid refresh token", error: error.message });
+    } catch (error) {
+        
     }
 }

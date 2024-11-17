@@ -1,23 +1,34 @@
 import mongoose from "mongoose";
 
-//Creating user Schema
+// Creating user Schema
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.isGoogleAuth;
+      },
     },
     email: {
       type: String,
       required: true,
+      unique: true,
     },
     phone: {
       type: String,
-      required: true,
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider === 'local';
+      },
+    },
+    isGoogleAuth: {
+      type: Boolean,
+      default: false, 
+    },
+    avatar: {
+      type: String,
     },
     isBlock: {
       type: Boolean,

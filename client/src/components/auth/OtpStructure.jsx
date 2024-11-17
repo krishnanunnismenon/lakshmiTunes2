@@ -5,7 +5,7 @@ import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useVerifyOTPMutation, useResendOTPMutation } from "@/services/api/authApi"
+import { useVerifyOTPMutation, useResendOTPMutation } from "@/services/api/user/authApi"
 import { useLocation, useNavigate } from 'react-router-dom'
 
 const OtpStructure = () => {
