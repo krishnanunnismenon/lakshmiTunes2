@@ -7,11 +7,11 @@ const corsOptions = {
   credentials: true,
 };
 
-const securityHeaders = (req, res, next) => {
+export const securityHeaders = (req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
   next();
 
 };
-const corsConfig = [cors(corsOptions),securityHeaders];
+const  corsConfig = [cors(corsOptions),securityHeaders];
 export default corsConfig

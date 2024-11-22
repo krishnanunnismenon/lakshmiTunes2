@@ -1,8 +1,27 @@
-import { Link } from "react-router-dom"
+import { Link, Navigate, useNavigate } from "react-router-dom"
 import { Menu, Search, User, ShoppingCart } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import { useDispatch, useSelector } from "react-redux"
+import { selectCurrentUser } from "@/redux/slice/userSlice"
+import { logOut } from "@/redux/slice/authSlice"
+import { LogOut } from "lucide-react"
 
 const Header = () => {
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const currentUser = useSelector(selectCurrentUser)
+  console.log(currentUser)
+  
+
+  const handleLogout = () => {
+
+    dispatch(logOut())
+
+  
+    localStorage.removeItem('userToken')
+    
+  }
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-black text-white h-14">
@@ -32,7 +51,7 @@ const Header = () => {
 
             {/* Logo */}
             <div className="absolute left-1/2 transform -translate-x-1/2 text-lg font-bold">
-              LOGO
+              LAKSHMI TUNES
             </div>
 
             {/* Icons */}
@@ -41,10 +60,17 @@ const Header = () => {
                 <Search className="h-5 w-5" />
                 <span className="sr-only">Search</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-white p-2 h-8 w-8">
-                <User className="h-5 w-5" />
-                <span className="sr-only">User account</span>
-              </Button>
+              {currentUser ? (
+                <Button variant="ghost" size="sm" className="text-white p-2 h-8 w-8" onClick={handleLogout}>
+                  <LogOut className="h-5 w-5" />
+                  <span className="sr-only">Logout</span>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={()=>navigate('/login')} className="text-white p-2 h-8 w-8">
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">User account</span>
+                </Button>
+              )}
               <Button variant="ghost" size="sm" className="text-white p-2 h-8 w-8">
                 <ShoppingCart className="h-5 w-5" />
                 <span className="sr-only">Shopping cart</span>

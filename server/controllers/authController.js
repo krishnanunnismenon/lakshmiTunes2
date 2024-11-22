@@ -8,7 +8,6 @@ import jwt from 'jsonwebtoken'
 import {google} from 'googleapis'
 
 
-
 export const signup = async (req,res)=>{
     try {
         const {name,email,phone,password} = req.body;
@@ -220,14 +219,98 @@ export const refreshToken = async(req,res)=>{
     try {
         const decoded =await jwt.verify(refreshToken,process.env.REFRESH_TOKEN);
         const user  = await User.findById(decoded.userId);
-        const accessToken = createAccessToken(user);
+        const accessToken = createAccessToken(user)
 
         res.json({accessToken})
 
+        
+    } catch (error) {
         res
       .status(403)
       .json({ message: "Invalid refresh token", error: error.message });
+        
+    }
+}
+
+export const adminSignIn = async (req,res)=>{
+    const{email,password} = req.body;
+
+    try {
+        const admin = await User.findOne({email,role:"admin"});
+        console.log(admin)
+        if(!admin){
+            return res.status(401).json({message:"Unauthorized admin"})
+        }
+        const validPassword = await bcrypt.compare(password,admin.password);
+
+        if(!validPassword){
+            return res.status(401).json({message:"Invalid Password"})
+        }
+
+        const refreshToken = createRefreshToken(admin)
+        const accessToken = createAccessToken(admin);
+
+        res.status(200)
+        .cookie("refreshToken",refreshToken,{
+            path:"/",
+            httpOnly:true,
+            secure:true,
+            sameSite:"none",
+            maxAge: 60 * 60 * 24 * 1000
+        })
+        .json({
+            success: true,
+            message:"Login successfull",
+            accessToken,
+            data:{
+                admin:{adminId: admin._id,email: admin.email,role: admin.role}
+            }
+        })
     } catch (error) {
         
+    }
+}
+
+export const verifyEmail = async(req,res)=>{
+    try {
+        const {email} = req.body;
+        
+        
+        
+        const user = await User.findOne({email});
+        
+
+        if(user){
+            const otp = generateOtp()
+            console.log(otp)
+            await sendOTPEmail(email,otp)
+            res.status(200).json({message:"OTP sent to email"})
+        }else{
+            res.status(404).json({message:"Email Not found"})
+        }
+    } catch (error) {
+        res.status(500).json({message:"Server Error"})
+    }
+}
+
+export const verifyEmailOTP = async(req,res)=>{
+    try {
+        const {email,otp} = req.body;
+        const user = await User.findOne({email})
+        
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+          }
+      
+        if (user.resetOTP !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+          }
+      
+        await user.save();
+        res.status(200).json({message:"OTP verified successfully"})
+      
+    } catch (error) {
+        res.status(500).json({message:"Server Error"})
     }
 }

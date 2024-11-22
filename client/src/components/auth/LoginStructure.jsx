@@ -3,7 +3,6 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { setCredentials } from "@/redux/slice/authSlice";
 import { useGoogleAuthMutation, useSignInMutation } from "@/services/api/user/authApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,13 +10,13 @@ import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { setUser } from "@/redux/slice/userSlice";
 import { useGoogleLogin } from "@react-oauth/google";
+import { setCredentials } from "@/redux/slice/authSlice";
 
 export const LoginStructure = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  // Mutations
   const [signIn, { isLoading }] = useSignInMutation();
   const [googleLogin, { isLoading: isGoogleLoading }] = useGoogleAuthMutation();
 
@@ -40,7 +39,7 @@ export const LoginStructure = () => {
         const accessToken = response?.accessToken
         console.log(accessToken);
         
-        dispatch(setUser({ user }));
+        dispatch(setCredentials({ user,accessToken }));
         localStorage.setItem("userToken", accessToken);
         navigate("/user/home");
       } catch (error) {
@@ -63,7 +62,7 @@ export const LoginStructure = () => {
        console.log(`The backed response ://${backendResponse.user.name}`)
        const user = backendResponse?.user;
        const accessToken = backendResponse?.accessToken;
-       dispatch(setUser({ user }));
+       dispatch(setCredentials({ user,accessToken }));
         localStorage.setItem("userToken", accessToken);
         navigate("/user/home");
       }
@@ -81,6 +80,7 @@ export const LoginStructure = () => {
     onError: handleGoogleFailure,
     flow: "auth-code",
   });
+
   return (
     <div className="min-h-screen w-full bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">

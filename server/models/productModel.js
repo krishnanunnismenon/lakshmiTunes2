@@ -15,13 +15,31 @@ const productSchema = new mongoose.Schema(
             required: true
         },
         thumbnailImage:{
-            type:[String],
+            type:String,
             required: true
+        },
+        images:{
+            type:[String],
+            required:true
+        },
+        category:{
+            type:String,
+            required:true
+        },
+        brand:{
+            type:String,
+            required:true
         },
         stock:{
             type:Number,
             required:true
         },
+        listed:{
+            type:Boolean,
+            default:true,
+            required:true
+        },
+        
         
     },
     {

@@ -8,24 +8,29 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
-import { useSignInMutation } from "@/services/api/user/authApi"
+import { setAdmin } from "@/redux/slice/adminSlice"
+import { useAdminSignInMutation } from "@/services/api/admin/adminApi"
 
 const validationSchema = Yup.object().shape({
   email: Yup.string().email("Invalid email").required("Email is required"),
   password: Yup.string().required("Password is required"),
 })
 
-export const AdminLogin = () => {
+export const  AdminLogin = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const [passwordVisible, setPasswordVisible] = useState(false)
-  const [signIn, { isLoading }] = useSignInMutation()
+  const [signIn, { isLoading }] = useAdminSignInMutation()
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
       const response = await signIn(values).unwrap()
-      // Handle successful login (e.g., store token, redirect)
-      navigate("/admin/dashboard")
+      
+      navigate("/admin/products")
+      const admin = response?.data?.admin
+      const token = response?.accessToken;
+      dispatch(setAdmin({admin}));
+      localStorage.setItem("adminToken",token);
     } catch (error) {
       setStatus({ apiError: error?.data?.message || "An error occurred" })
     } finally {
@@ -57,7 +62,7 @@ export const AdminLogin = () => {
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="admin@email.com"
+                  
                   className="bg-gray-900 border-gray-800 text-white placeholder:text-gray-500"
                 />
                 {errors.email && touched.email && (

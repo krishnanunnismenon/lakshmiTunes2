@@ -3,6 +3,13 @@ import productRouter from './productRouter.js'
 import { verifyRole, verifyToken } from '../middlewares/jwtVerify.js';
 const adminRouter = express.Router();
 
-adminRouter.use('/products',verifyToken,verifyRole(['admin']),productRouter)
+//adminRoute
+
+// verifyToken,verifyRole(['admin']),
+
+
+//subRoute
+
+adminRouter.use('/products',productRouter)
 
 export default adminRouter;

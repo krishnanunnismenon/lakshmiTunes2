@@ -5,51 +5,30 @@ import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { useVerifyOTPMutation, useResendOTPMutation } from "@/services/api/user/authApi"
+import { useVerifyForgotPassMutation, useResendForgotPassOtpMutation } from "@/services/api/user/authApi"
 import { useLocation, useNavigate } from 'react-router-dom'
 
-const OtpStructure = () => {
+const ForgotPasswordOtp = () => {
   const location = useLocation()  
   const navigate = useNavigate()
   const email = location.state?.email
 
-  const [verifyOTP, { isLoading }] = useVerifyOTPMutation()
-  const [resendOTP, { isLoading: isResending }] = useResendOTPMutation()
+  const [verifyResetOTP, { isLoading }] = useVerifyForgotPassMutation()
+  const [resendResetOTP, { isLoading: isResending }] = useResendForgotPassOtpMutation()
   const [resendMessage, setResendMessage] = useState("")
   const [serverErrors, setServerErrors] = useState({})
-  const [resendTimer, setResendTimer] = useState(() => {
-    const savedTimer = localStorage.getItem("resendTimer")
-    const savedTime = localStorage.getItem("resendTime")
-    if (savedTimer && savedTime) {
-      const passedTime = Math.floor((Date.now() - parseInt(savedTime, 10)) / 1000)
-      const remainingTime = Math.max(0, parseInt(savedTimer, 10) - passedTime)
-      return remainingTime
-    }
-    return 60 // Initial timer value
-  })
+  const [resendTimer, setResendTimer] = useState(60)
 
   const inputRefs = [useRef(), useRef(), useRef(), useRef(), useRef(), useRef()]
-
-  useEffect(() => {
-    localStorage.removeItem("resendTimer")
-    localStorage.removeItem("resendTime")
-  }, [])
 
   useEffect(() => {
     let timer
     if (resendTimer > 0) {
       timer = setInterval(() => {
-        setResendTimer((prevTimer) => {
-          const newTimer = prevTimer - 1
-          localStorage.setItem("resendTimer", newTimer.toString())
-          localStorage.setItem("resendTime", Date.now().toString())
-          return newTimer
-        })
+        setResendTimer((prevTimer) => prevTimer - 1)
       }, 1000)
     }
-    return () => {
-      clearInterval(timer)
-    }
+    return () => clearInterval(timer)
   }, [resendTimer])
 
   const formik = useFormik({
@@ -64,11 +43,10 @@ const OtpStructure = () => {
     onSubmit: async (values) => {
       const otpValue = values.otp.join('')
       try {
-        await verifyOTP({ email, otpValue }).unwrap()
-        navigate("/login")
+        await verifyResetOTP({ email, otp: otpValue }).unwrap()
+        navigate("/reset-password", { state: { email } })
       } catch (error) {
-        setServerErrors({ apiError: error?.data?.message })
-        console.log(error?.data?.message)
+        setServerErrors({ apiError: error?.data?.message || "Failed to verify OTP" })
       }
     }
   })
@@ -108,10 +86,8 @@ const OtpStructure = () => {
     if (isResending || resendTimer > 0) return
 
     try {
-      await resendOTP({ email }).unwrap()
+      await resendResetOTP({ email }).unwrap()
       setResendTimer(60)
-      localStorage.setItem("resendTimer", "60")
-      localStorage.setItem("resendTime", Date.now().toString())
       setResendMessage("OTP resent successfully")
       setTimeout(() => setResendMessage(""), 2000)
     } catch (error) {
@@ -122,7 +98,7 @@ const OtpStructure = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
       <div className="w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6">Email Verification</h2>
+        <h2 className="text-2xl font-bold text-center mb-6">Verify OTP</h2>
         <p className="text-center mb-8">Enter the 6-digit verification code sent to your email.</p>
 
         <form onSubmit={formik.handleSubmit} className="space-y-6">
@@ -179,4 +155,4 @@ const OtpStructure = () => {
   )
 }
 
-export default OtpStructure
+export default ForgotPasswordOtp

@@ -1,5 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQueryWithReauth } from "./baseQueryUser";
+import { data } from "autoprefixer";
+
 
 export const authApi = createApi({
   baseQuery: baseQueryWithReauth,
@@ -25,6 +27,27 @@ export const authApi = createApi({
         body:{email}
       })
     }),
+    forgotPass: builder.mutation({
+      query:(data)=>({
+        url:"auth/verify-email",
+        method:"POST",
+        body:{email:data.email}
+      })
+    }),
+    verifyForgotPass:builder.mutation({
+      query:({email,otp})=>({
+        url:"auth/veify-emailOTP",
+        method:"POST",
+        body:{email,otp}
+      })
+    }),
+    resendForgotPassOtp:builder.mutation({
+      query:(data)=>({
+        url:"auth/resend-forgotPass-otp",
+        method:"POST",
+        body:{email:data.email}
+      })
+    }),
     signIn: builder.mutation({
       query:(credentials)=>({
         url:"auth/signin",
@@ -43,4 +66,4 @@ export const authApi = createApi({
     
 });
 
-export const { useSignUpMutation ,useVerifyOTPMutation, useResendOTPMutation, useSignInMutation,useGoogleAuthMutation} = authApi;
+export const { useSignUpMutation ,useVerifyOTPMutation, useResendOTPMutation, useSignInMutation,useGoogleAuthMutation, useForgotPassMutation, useVerifyForgotPassMutation, useResendForgotPassOtpMutation} = authApi;

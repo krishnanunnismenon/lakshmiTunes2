@@ -5,7 +5,7 @@ import Header from '@/components/customUi/Header'
 const UserSignup = () => {
   return (
     <div>
-      
+      <Header/>
       <SignUp/>
     </div>
   )

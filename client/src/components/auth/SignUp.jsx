@@ -1,16 +1,18 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Formik, Form, Field, ErrorMessage } from "formik";
-import * as Yup from "yup";
-import { useSignUpMutation } from "../../services/api/user/authApi";
+import { useState } from "react"
+import { useNavigate ,Link} from "react-router-dom"
+import { Formik, Form, Field, ErrorMessage } from "formik"
+import * as Yup from "yup"
+import { useSignUpMutation } from "../../services/api/user/authApi"
+import { useGoogleLogin } from '@react-oauth/google';
+import { useDispatch } from 'react-redux';
+import { setUser } from "@/redux/slice/userSlice"
+import { useGoogleAuthMutation } from "../../services/api/user/authApi"
 
-// Define validation schema using Yup
 const SignupSchema = Yup.object().shape({
-  name: Yup.string()
-    // .min(3, "Name must be at least 3 characters")
-    // .max(30, "Name must be at most 30 characters")
-    // .matches(/^[a-zA-Z\s]+$/, "Name must contain only letters")
-    .required("Name is required"),
+  firstName: Yup.string()
+    .required("First name is required"),
+  lastName: Yup.string()
+    .required("Last name is required"),
   email: Yup.string()
     .email("Invalid email address")
     .required("Email is required"),
@@ -18,127 +20,213 @@ const SignupSchema = Yup.object().shape({
     .matches(/^\d{10}$/, "Phone Number must be 10 digits")
     .required("Phone number is required"),
   password: Yup.string()
-    // .min(8, "Password must be at least 8 characters")
-    // .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, "Password must contain uppercase, lowercase, number, and special character")
     .required("Password is required"),
   password2: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords do not match")
     .required("Confirm password is required"),
-});
+})
 
 export const SignUp = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const [signup, { isLoading }] = useSignUpMutation()
+  const dispatch = useDispatch();
+  const [googleLogin] = useGoogleAuthMutation();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [signup, { isLoading }] = useSignUpMutation();
 
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
   };
 
-  const handleSubmit = async (values, { setSubmitting, setFieldError, setStatus }) => {
+  const handleGoogleSuccess = async (response) => {
     try {
-      const response = await signup(values).unwrap();
-      setStatus({ successMessage: "OTP sent to email" });
-      navigate("/verify-otp", { state: { email: values.email } });
+      const authCode = response.code;
+      console.log(authCode)
+      if (authCode) {
+        const backendResponse = await googleLogin({ authCode }).unwrap();
+        console.log(`The backed response ://${backendResponse.user.name}`)
+        const user = backendResponse?.user;
+        const accessToken = backendResponse?.accessToken;
+        dispatch(setUser({ user }));
+        localStorage.setItem("userToken", accessToken);
+        navigate("/user/home");
+      }
     } catch (error) {
-      setFieldError("apiError", error?.data?.message || "Signup failed");
-    } finally {
-      setSubmitting(false);
+      console.error("Google login failed:", error);
     }
   };
 
+  const handleGoogleFailure = (error) => {
+    console.error("Google login error:", error);
+  };
+
+  const googleAuth = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: handleGoogleFailure,
+    flow: "auth-code",
+  });
+
+  const handleSubmit = async (values, { setSubmitting, setFieldError }) => {
+    try {
+      await signup({
+        name: `${values.firstName} ${values.lastName}`,
+        email: values.email,
+        phone: values.phone,
+        password: values.password
+      }).unwrap()
+      navigate("/verify-otp", { state: { email: values.email } })
+    } catch (error) {
+      setFieldError("apiError", error?.data?.message || "Signup failed")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
-    <div className="min-h-screen w-full bg-black flex items-center justify-center p-4 text-white">
-      <div className="w-full max-w-md bg-gray-800 p-8 rounded-lg border border-gray-700">
-        <h3 className="text-2xl font-bold text-center mb-6">Account Signup</h3>
-        <Formik
-          initialValues={{
-            name: "",
-            email: "",
-            phone: "",
-            password: "",
-            password2: "",
-          }}
-          validationSchema={SignupSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ status, errors, touched, isSubmitting }) => (
-            <Form className="space-y-4">
-              {status?.successMessage && (
-                <div className="text-green-500 text-center">{status.successMessage}</div>
-              )}
-              {errors.apiError && <div className="text-red-500 text-center">{errors.apiError}</div>}
+    <div className="min-h-screen w-full bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="bg-[#111] rounded-lg p-8">
+          <h2 className="text-2xl font-bold text-white text-center mb-6">
+            Create Account
+          </h2>
 
-              <div>
-                <label className="bk text-sm">Name</label>
-                <Field
-                  name="name"
-                  type="text"
-                  className="w-full bg-gray-900 text-white border border-gray-600 px-4 py-2 rounded"
-                />
-                <ErrorMessage name="name" component="div" className="text-red-500 text-sm" />
-              </div>
+          <Formik
+            initialValues={{
+              firstName: "",
+              lastName: "",
+              email: "",
+              phone: "",
+              password: "",
+              password2: "",
+            }}
+            validationSchema={SignupSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ errors, touched, isSubmitting }) => (
+              <Form className="space-y-4">
+                {errors.apiError && (
+                  <div className="text-red-500 text-center text-sm">
+                    {errors.apiError}
+                  </div>
+                )}
 
-              <div>
-                <label className="block text-sm">Email</label>
-                <Field
-                  name="email"
-                  type="email"
-                  className="w-full bg-gray-900 text-white border border-gray-600 px-4 py-2 rounded"
-                />
-                <ErrorMessage name="email" component="div" className="text-red-500 text-sm" />
-              </div>
-
-              <div>
-                <label className="block text-sm">Phone Number</label>
-                <Field
-                  name="phone"
-                  type="tel"
-                  className="w-full bg-gray-900 text-white border border-gray-600 px-4 py-2 rounded"
-                />
-                <ErrorMessage name="phone" component="div" className="text-red-500 text-sm" />
-              </div>
-
-              <div>
-                <label className="block text-sm">Password</label>
-                <div className="relative">
+                <div>
                   <Field
-                    name="password"
-                    type={passwordVisible ? "text" : "password"}
-                    className="w-full bg-gray-900 text-white border border-gray-600 px-4 py-2 rounded"
+                    name="firstName"
+                    type="text"
+                    placeholder="First name"
+                    className="w-full bg-white text-black px-4 py-2 rounded-md"
                   />
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className="absolute right-3 top-3 text-gray-500"
-                  >
-                    {passwordVisible ? "Hide" : "Show"}
-                  </button>
+                  <ErrorMessage
+                    name="firstName"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
                 </div>
-                <ErrorMessage name="password" component="div" className="text-red-500 text-sm" />
-              </div>
 
-              <div>
-                <label className="block text-sm">Confirm Password</label>
-                <Field
-                  name="password2"
-                  type="password"
-                  className="w-full bg-gray-900 text-white border border-gray-600 px-4 py-2 rounded"
-                />
-                <ErrorMessage name="password2" component="div" className="text-red-500 text-sm" />
-              </div>
+                <div>
+                  <Field
+                    name="lastName"
+                    type="text"
+                    placeholder="Last name"
+                    className="w-full bg-white text-black px-4 py-2 rounded-md"
+                  />
+                  <ErrorMessage
+                    name="lastName"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
 
-              <button
-                type="submit"
-                disabled={isSubmitting || isLoading}
-                className="w-full bg-blue-600 text-white py-2 rounded font-semibold hover:bg-blue-700 disabled:opacity-50"
-              >
-                {isLoading ? "Submitting..." : "Sign Up"}
-              </button>
-            </Form>
-          )}
-        </Formik>
+                <div>
+                  <Field
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    className="w-full bg-white text-black px-4 py-2 rounded-md"
+                  />
+                  <ErrorMessage
+                    name="email"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Field
+                    name="phone"
+                    type="tel"
+                    placeholder="Phone Number"
+                    className="w-full bg-white text-black px-4 py-2 rounded-md"
+                  />
+                  <ErrorMessage
+                    name="phone"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                <div>
+                  <div className="relative">
+                    <Field
+                      name="password"
+                      type={passwordVisible ? "text" : "password"}
+                      placeholder="Password"
+                      className="w-full bg-white text-black px-4 py-2 rounded-md"
+                    />
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {passwordVisible ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  <ErrorMessage
+                    name="password"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Field
+                    name="password2"
+                    type="password"
+                    placeholder="Confirm Password"
+                    className="w-full bg-white text-black px-4 py-2 rounded-md"
+                  />
+                  <ErrorMessage
+                    name="password2"
+                    component="div"
+                    className="text-red-500 text-sm mt-1"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isLoading}
+                  className="w-full bg-gray-700 text-white py-2 rounded-md hover:bg-gray-600 transition-colors"
+                >
+                  Register
+                </button>
+              </Form>
+            )}
+          </Formik>
+        </div>
+
+        <button
+          onClick={googleAuth}
+          className="w-full bg-orange-500 text-white py-3 rounded-md hover:bg-orange-600 transition-colors"
+        >
+          Sign in With Google
+        </button>
+        <p className="text-white text-center text-sm">
+              Already Have an Account?{" "}
+              <Link to="/login" className="text-blue-500 hover:underline">
+                Login
+              </Link>
+          </p>
       </div>
     </div>
-  );
-};
+  )
+}
