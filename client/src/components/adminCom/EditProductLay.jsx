@@ -1,10 +1,10 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Formik, Form, Field } from 'formik'
 import * as Yup from 'yup'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { useAddProductsMutation, useGetCategoriesQuery} from '@/services/api/admin/adminApi'
+import { useUpdateProductMutation, useGetCategoriesQuery } from '@/services/api/admin/adminApi'
 import { X } from 'lucide-react'
 import ReactCrop from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
@@ -28,10 +28,10 @@ const validationSchema = Yup.object().shape({
   brand: Yup.string().required('Brand is required'),
 })
 
-export default function AddProducts() {
-  const [addProduct, { isLoading }] = useAddProductsMutation()
+export default function EditProduct({ product }) {
+  const [updateProduct, { isLoading }] = useUpdateProductMutation()
   const { data: categories, isLoading: isCategoriesLoading } = useGetCategoriesQuery()
-  const [images, setImages] = useState([])
+  const [images, setImages] = useState(product.images || [])
   const [currentImage, setCurrentImage] = useState(null)
   const [crop, setCrop] = useState({ unit: '%', width: 30, aspect: 1 })
   const [completedCrop, setCompletedCrop] = useState(null)
@@ -41,10 +41,7 @@ export default function AddProducts() {
   const { toast } = useToast()
 
   const validateFileType = (file) => {
-    if (file && ALLOWED_FILE_TYPES.includes(file.type)) {
-      return true
-    }
-    return false
+    return file && ALLOWED_FILE_TYPES.includes(file.type)
   }
 
   const handleImageChange = (files) => {
@@ -55,7 +52,6 @@ export default function AddProducts() {
         const reader = new FileReader()
         reader.onload = () => {
           setCurrentImage(reader.result)
-          
           setCrop({ unit: '%', width: 30, aspect: 1 })
         }
         reader.readAsDataURL(file)
@@ -64,7 +60,6 @@ export default function AddProducts() {
       }
     }
   }
-
 
   const onCropComplete = useCallback((crop) => {
     setCompletedCrop(crop)
@@ -90,7 +85,7 @@ export default function AddProducts() {
 
     ctx.drawImage(
       image,
-      crop.x * scaleX ,
+      crop.x * scaleX,
       crop.y * scaleY,
       crop.width * scaleX,
       crop.height * scaleY,
@@ -119,56 +114,59 @@ export default function AddProducts() {
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = async (values, { resetForm }) => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     const productData = new FormData()
     for(const key in values){
       productData.append(key, values[key])
     }
    
-    images.forEach((image) => {
-      productData.append('images', image.file)
+    images.forEach((image, index) => {
+      if (image.file) {
+        productData.append(`images`, image.file)
+      } else {
+        productData.append(`existingImages`, image)
+      }
     })
 
     try {
-      const result = await addProduct(productData).unwrap()
-      console.log('Product added successfully:', result)
+      const result = await updateProduct({ id: product._id, productData }).unwrap()
+      console.log('Product updated successfully:', result)
       
       toast({
-        description: result.message || "Product added successfully",
+        description: result.message || "Product updated successfully",
         duration: 3000,
         className: "bg-green-500 text-white",
       })
-
-      resetForm()
-      setImages([])
     } catch (error) {
-      console.error('Failed to add product:', error)
+      console.error('Failed to update product:', error)
       toast({
-        description: error.data?.message || "Failed to add product",
+        description: error.data?.message || "Failed to update product",
         duration: 3000,
         className: "bg-red-500 text-white",
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
     <div className="min-h-screen bg-black p-6">
-      <h1 className="text-2xl font-bold text-white text-center mb-6">ADD PRODUCTS</h1>
+      <h1 className="text-2xl font-bold text-white text-center mb-6">EDIT PRODUCT</h1>
       
       <div className="max-w-2xl mx-auto rounded-lg bg-[#1a1b1e] p-6">
         <Formik
           initialValues={{
-            name: '',
-            price: '',
-            stock: '',
-            description: '',
-            category: '',
-            brand: ''
+            name: product.name,
+            price: product.price,
+            stock: product.stock,
+            description: product.description,
+            category: product.category,
+            brand: product.brand
           }}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ errors, touched,setFieldValue}) => (
+          {({ errors, touched, setFieldValue }) => (
             <Form className="space-y-4">
               <div>
                 <label className="text-gray-400 text-sm">Product name</label>
@@ -218,31 +216,32 @@ export default function AddProducts() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="category" className="text-gray-400 text-sm">Category</label>
-                <Select 
-                  onValueChange={(value) => setFieldValue('category', value)}
-                  name="category"
-                >
-                  <SelectTrigger className="bg-[#2a2b2e] border-gray-700 text-white">
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#2a2b2e] border-gray-700 text-white">
-                    {isCategoriesLoading ? (
-                      <SelectItem value="loading">Loading categories...</SelectItem>
-                    ) : categories?.length > 0 ? (
-                      categories.map((category) => (
-                        <SelectItem key={category._id} value={category._id}>
-                          {category.name}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="">No categories available</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                {errors.category && touched.category && <div className="text-red-500 text-sm">{errors.category}</div>}
-              </div>
+                <div>
+                  <label htmlFor="category" className="text-gray-400 text-sm">Category</label>
+                  <Select 
+                    onValueChange={(value) => setFieldValue('category', value)}
+                    defaultValue={product.category}
+                    name="category"
+                  >
+                    <SelectTrigger className="bg-[#2a2b2e] border-gray-700 text-white">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#2a2b2e] border-gray-700 text-white">
+                      {isCategoriesLoading ? (
+                        <SelectItem value="loading">Loading categories...</SelectItem>
+                      ) : categories?.length > 0 ? (
+                        categories.map((category) => (
+                          <SelectItem key={category._id} value={category._id}>
+                            {category.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="">No categories available</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {errors.category && touched.category && <div className="text-red-500 text-sm">{errors.category}</div>}
+                </div>
                 <div>
                   <label className="text-gray-400 text-sm">Brand</label>
                   <Field
@@ -300,16 +299,14 @@ export default function AddProducts() {
                 <div className="flex flex-wrap gap-2 mt-2">
                   {images.map((image, index) => (
                     <div key={index} className="relative">
-                      <div className="bg-[#2a2b2e] text-white px-3 py-1 rounded flex items-center">
-                        Image {index + 1}
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="ml-2 text-gray-400 hover:text-white"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <img src={image.file ? URL.createObjectURL(image.file) : image} alt={`Product ${index + 1}`} className="w-20 h-20 object-cover rounded" />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -320,7 +317,7 @@ export default function AddProducts() {
                 className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"
                 disabled={isLoading}
               >
-                {isLoading ? 'Adding Product...' : 'Add Product'}
+                {isLoading ? 'Updating Product...' : 'Update Product'}
               </Button>
             </Form>
           )}
@@ -329,3 +326,4 @@ export default function AddProducts() {
     </div>
   )
 }
+

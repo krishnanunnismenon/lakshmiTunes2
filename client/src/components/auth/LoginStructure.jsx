@@ -41,7 +41,7 @@ export const LoginStructure = () => {
         
         dispatch(setCredentials({ user,accessToken }));
         localStorage.setItem("userToken", accessToken);
-        navigate("/user/home");
+        navigate("/home");
       } catch (error) {
         formik.setStatus({ apiError: error?.data?.message });
       }
@@ -64,7 +64,7 @@ export const LoginStructure = () => {
        const accessToken = backendResponse?.accessToken;
        dispatch(setCredentials({ user,accessToken }));
         localStorage.setItem("userToken", accessToken);
-        navigate("/user/home");
+        navigate("/home");
       }
     } catch (error) {
       console.error("Google login failed:", error);

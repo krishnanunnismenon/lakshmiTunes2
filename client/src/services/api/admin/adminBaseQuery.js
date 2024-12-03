@@ -7,8 +7,11 @@ const baseQuery = fetchBaseQuery({
   credentials: "include",
   prepareHeaders: (headers) => {
     const token = localStorage.getItem("adminToken")
+    console.log(token)
+    
     if(token){
         headers.set("authorization",`Bearer ${token}`)
+        
     }
     return headers
   },
@@ -16,8 +19,10 @@ const baseQuery = fetchBaseQuery({
 
 export const baseQueryWithReauth = async (args, api, extraOptions) => {
   let result = await baseQuery(args, api, extraOptions);
-  
+  console.log(result)
+ 
   if (result?.error && result?.error?.status === 401) {
+    
 
     const refreshResult = await baseQuery(
       "/auth/refresh-token",
@@ -26,9 +31,11 @@ export const baseQueryWithReauth = async (args, api, extraOptions) => {
     );
 
     console.log("refresh", refreshResult);
-
+    console.log(refreshResult)
     if (refreshResult?.data) {
+      
       const { accessToken } = refreshResult.data;
+      
      if(accessToken){
         localStorage.setItem("adminToken",accessToken)
      }

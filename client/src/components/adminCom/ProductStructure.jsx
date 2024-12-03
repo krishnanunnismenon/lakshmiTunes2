@@ -85,15 +85,17 @@ export default function ProductStructure() {
                 className="border-b border-gray-800"
               >
                 <TableCell className="text-white">{product.name}</TableCell>
-                <TableCell className="text-white">{product.category}</TableCell>
                 <TableCell className="text-white">
-                  {/* {product.thumbnailImage && (
+                  {product.category && product.category.name ? product.category.name : 'N/A'}
+                </TableCell>
+                <TableCell className="text-white">
+                  {product.thumbnailImage && (
                     <img 
                       src={product.thumbnailImage} 
                       alt={`${product.name} thumbnail`} 
                       className="w-16 h-16 object-cover"
                     />
-                  )} */}
+                  )}
                 </TableCell>
                 <TableCell className="text-white">{product.price}</TableCell>
                 <TableCell className="text-white">{product.stock}</TableCell>

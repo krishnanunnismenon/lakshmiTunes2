@@ -1,6 +1,7 @@
 import React from 'react'
 
 import AdminSidebar from '@/components/customUi/AdminSidebar'
+import { Toaster } from '../ui/toaster'
 
 export const AdminLayout = ({ children }) => {
   return (
@@ -8,6 +9,7 @@ export const AdminLayout = ({ children }) => {
       <AdminSidebar />
       <div className="flex-1 overflow-auto">
         {children}
+        <Toaster/>
       </div>
     </div>
   )

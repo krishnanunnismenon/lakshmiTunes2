@@ -4,7 +4,8 @@ const initialState ={
     adminId:null,
     email:null,
     role:null,
-    isAuthenticated:false
+    isAuthenticated:false,
+    
 }
 
 const adminSlice = createSlice({
@@ -13,17 +14,20 @@ const adminSlice = createSlice({
     reducers:{
         setAdmin:(state,action)=>{
             const {admin} = action.payload;
+            
             state.adminId = admin.adminId;
             state.email = admin.email;
             state.role = admin.role;
             state.isAuthenticated = true
+            
         },
         adminLogout:(state)=>{
             state.adminId = null;
             state.email = null;
             state.role = null;
             state.isAuthenticated = false;
-            localStorage.removeItem("adminToken")
+            localStorage.removeItem("adminToken");
+            state.token = null;
         }
     }
 })

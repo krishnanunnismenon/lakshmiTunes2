@@ -1,21 +1,23 @@
 
 
-import Header from "@/components/customUi/Header"
+
 import Banner from "./home/Banner"
 import BestSellers from "./home/BestSellers"
 import Review from "./home/Review"
 import NewItems from "./home/NewItems"
+import UserLayout from "../customUi/UserLayout"
 
 // Main HomePage Component
 const HomeComponents = () => {
   return (
-    <div className="min-h-screen bg-white">
-      <Header/>
+    <UserLayout>
       <Banner />
       <BestSellers />
       <Review/>
       <NewItems />
-    </div>
+    </UserLayout>
+      
+    
   )
 }
 

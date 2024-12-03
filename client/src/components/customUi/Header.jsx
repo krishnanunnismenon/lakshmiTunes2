@@ -1,25 +1,28 @@
-import { Link, Navigate, useNavigate } from "react-router-dom"
-import { Menu, Search, User, ShoppingCart } from 'lucide-react'
+import { Link, useNavigate } from "react-router-dom"
+import { Menu, Search, User, ShoppingCart, LogOut } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useDispatch, useSelector } from "react-redux"
 import { selectCurrentUser } from "@/redux/slice/userSlice"
 import { logOut } from "@/redux/slice/authSlice"
-import { LogOut } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const Header = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const currentUser = useSelector(selectCurrentUser)
   console.log(currentUser)
-  
 
   const handleLogout = () => {
-
     dispatch(logOut())
-
-  
     localStorage.removeItem('userToken')
-    
+    navigate('/login')
   }
 
   return (
@@ -29,7 +32,7 @@ const Header = () => {
           <div className="relative flex items-center justify-between h-14">
             {/* Navigation Links */}
             <nav className="hidden md:flex items-center space-x-6">
-              <Link to="/" className="text-sm hover:text-primary transition-colors">
+              <Link to="/home" className="text-sm hover:text-primary transition-colors">
                 Home
               </Link>
               <Link to="/shop" className="text-sm hover:text-primary transition-colors">
@@ -61,12 +64,27 @@ const Header = () => {
                 <span className="sr-only">Search</span>
               </Button>
               {currentUser ? (
-                <Button variant="ghost" size="sm" className="text-white p-2 h-8 w-8" onClick={handleLogout}>
-                  <LogOut className="h-5 w-5" />
-                  <span className="sr-only">Logout</span>
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-white p-2 h-8 w-8">
+                      <User className="h-5 w-5" />
+                      <span className="sr-only">User menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={()=>navigate('/profile')}>Profile</DropdownMenuItem>
+                    <DropdownMenuItem>Settings</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
-                <Button variant="ghost" size="sm" onClick={()=>navigate('/login')} className="text-white p-2 h-8 w-8">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/login')} className="text-white p-2 h-8 w-8">
                   <User className="h-5 w-5" />
                   <span className="sr-only">User account</span>
                 </Button>

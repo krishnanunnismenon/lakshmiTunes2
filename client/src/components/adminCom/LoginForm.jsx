@@ -24,13 +24,19 @@ export const  AdminLogin = () => {
 
   const handleSubmit = async (values, { setSubmitting, setStatus }) => {
     try {
-      const response = await signIn(values).unwrap()
+        const response = await signIn(values).unwrap()
+        
+        console.log(response)
+        const admin = response?.data?.admin
+        const token = response?.adminToken;
+        
+        dispatch(setAdmin({admin}));
+        if(token){
+          localStorage.setItem("adminToken",token)
+        }
       
+
       navigate("/admin/products")
-      const admin = response?.data?.admin
-      const token = response?.accessToken;
-      dispatch(setAdmin({admin}));
-      localStorage.setItem("adminToken",token);
     } catch (error) {
       setStatus({ apiError: error?.data?.message || "An error occurred" })
     } finally {

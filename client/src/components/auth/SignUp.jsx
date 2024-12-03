@@ -48,7 +48,7 @@ export const SignUp = () => {
         const accessToken = backendResponse?.accessToken;
         dispatch(setUser({ user }));
         localStorage.setItem("userToken", accessToken);
-        navigate("/user/home");
+        navigate("/home");
       }
     } catch (error) {
       console.error("Google login failed:", error);
