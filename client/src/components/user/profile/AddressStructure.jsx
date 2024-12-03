@@ -8,7 +8,7 @@ import { PenSquare, Plus, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useGetUserAddressesQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation } from '@/services/api/user/userApi';
+import { useGetUserAddressQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation } from '@/services/api/user/userApi';
 import { useToast } from '@/hooks/use-toast';
 
 const addressSchema = Yup.object().shape({
@@ -21,7 +21,7 @@ const addressSchema = Yup.object().shape({
 
 const AddressStructure = () => {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const { data: addresses, isLoading } = useGetUserAddressesQuery();
+  const { data: addresses, isLoading } = useGetUserAddressQuery();
   const [addAddress, { isLoading: isAdding }] = useAddUserAddressMutation();
   const [updatePrimaryAddress] = useUpdatePrimaryAddressMutation();
   const { toast } = useToast();

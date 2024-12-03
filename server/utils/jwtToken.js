@@ -17,7 +17,7 @@ export const createAccessToken = (user) => {
     { userId: user._id, email: user.email, role: user.role },
     process.env.ACCESS_TOKEN,
     {
-      expiresIn: "10s",
+      expiresIn: "1m",
     }
   );
 };

@@ -1,6 +1,18 @@
 import mongoose from "mongoose";
 
-// Creating user Schema
+const addressSchema = new mongoose.Schema({
+  street: String,
+  city: String,
+  state: String,
+  zipCode: String,
+  country: String,
+  isPrimary: {
+    type: Boolean,
+    default: false
+  }
+});
+
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -39,6 +51,7 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    addresses: [addressSchema],
   },
   { timestamps: true }
 );

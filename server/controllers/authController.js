@@ -6,6 +6,7 @@ import { createAccessToken, createRefreshToken } from "../utils/jwtToken.js";
 import oAuth2client from "../utils/googleConfig.js";
 import jwt from 'jsonwebtoken'
 import {google} from 'googleapis'
+import Otp from "../models/otpSchema.js";
 
 
 export const signup = async (req,res)=>{
@@ -115,6 +116,7 @@ export const resendOTP = async (req,res)=>{
 
 export const signIn = async (req,res)=>{
     const {email,password} = req.body;
+    
 
     try {
         const user = await User.findOne({email});
@@ -122,6 +124,10 @@ export const signIn = async (req,res)=>{
             return res.status(404).json({message:"User does not Exist"})
         }
 
+        if(user.isBlock){
+            return res.status(403).json({ message: 'Your account is blocked. Contact support.' });
+          }
+    
         const validPassword = await bcrypt.compare(password,user.password)
 
         if(!validPassword){
@@ -130,6 +136,7 @@ export const signIn = async (req,res)=>{
 
         const refreshToken = createRefreshToken(user)
         const accessToken = createAccessToken(user)
+        
 
         res
         .status(200)
@@ -161,10 +168,11 @@ export const googleLogin = async (req, res) => {
             return res.status(400).json({ message: 'Authorization code not provided' });
         }
 
+
   
         const { tokens } = await oAuth2client.getToken(code);
         oAuth2client.setCredentials(tokens);
-console.log(tokens)
+        console.log(tokens)
      
         const oauth2 = google.oauth2('v2');
         const { data: userInfo } = await oauth2.userinfo.get({ auth: oAuth2client });
@@ -178,6 +186,9 @@ console.log(tokens)
         const { email, name, picture } = userInfo;
 
         let user = await User.findOne({ email });
+        if(user.isBlock){
+            return res.status(403).json({ message: 'Your account is blocked. Contact support.' });
+          }
         if (!user) {
            
             user = await User.create({
@@ -211,14 +222,19 @@ console.log(tokens)
 
 export const refreshToken = async(req,res)=>{
     const refreshToken = req.cookies?.refreshToken;
-    
+    console.log("hello")
     if(!refreshToken){
         return res.status(401).json({message:"Refresh Token not found"});
     }
 
     try {
+        
         const decoded =await jwt.verify(refreshToken,process.env.REFRESH_TOKEN);
+        
         const user  = await User.findById(decoded.userId);
+        if(!user){
+            return res.status(404).json({ message: "User not found" });
+        }
         const accessToken = createAccessToken(user)
 
         res.json({accessToken})
@@ -237,7 +253,7 @@ export const adminSignIn = async (req,res)=>{
 
     try {
         const admin = await User.findOne({email,role:"admin"});
-        console.log(admin)
+        
         if(!admin){
             return res.status(401).json({message:"Unauthorized admin"})
         }
@@ -248,8 +264,8 @@ export const adminSignIn = async (req,res)=>{
         }
 
         const refreshToken = createRefreshToken(admin)
-        const accessToken = createAccessToken(admin);
-
+        const adminToken = createAccessToken(admin);
+        
         res.status(200)
         .cookie("refreshToken",refreshToken,{
             path:"/",
@@ -261,7 +277,7 @@ export const adminSignIn = async (req,res)=>{
         .json({
             success: true,
             message:"Login successfull",
-            accessToken,
+            adminToken,
             data:{
                 admin:{adminId: admin._id,email: admin.email,role: admin.role}
             }
@@ -284,6 +300,12 @@ export const verifyEmail = async(req,res)=>{
             const otp = generateOtp()
             console.log(otp)
             await sendOTPEmail(email,otp)
+            const expiresAt = new Date(Date.now()+ 60000);
+            await Otp.create({
+                userId: user._id,
+                otp,
+                expiresAt
+            })
             res.status(200).json({message:"OTP sent to email"})
         }else{
             res.status(404).json({message:"Email Not found"})
@@ -302,12 +324,15 @@ export const verifyEmailOTP = async(req,res)=>{
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
           }
+
+          const otpEntry = await Otp.findOne({userId: user._id,otp:otp})
       
-        if (user.resetOTP !== otp) {
+        if (!otpEntry) {
             return res.status(400).json({ message: 'Invalid OTP' });
           }
       
-        await user.save();
+        otpEntry.verified = true;
+        await otpEntry.save()
         res.status(200).json({message:"OTP verified successfully"})
       
     } catch (error) {

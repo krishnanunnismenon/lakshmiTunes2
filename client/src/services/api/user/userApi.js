@@ -61,16 +61,26 @@ export const userApi = createApi({
         }),
         getUserAddress:builder.query({
             query:()=>({
-                url:'user/get-address',
+                url:'user/addresses',
                 method:"GET"
-            })
+            }),
+            providesTags:['Address'],
         }),
         addUserAddress:builder.mutation({
-            query:(adderess)=>({
-            url:'user/add-address',
-            method:"GET"
-            })
+            query:(address)=>({
+            url:'user/addresses',
+            method:"POST",
+            body:address
+            }),
+            invalidatesTags:['Address']
             
+        }),
+        updatePrimaryAddress:builder.mutation({
+            query:(addressId)=>({
+                url:`user/addresses/${addressId}/primary`,
+                method:"PUT"
+            }),
+            invalidatesTags:['Address']
         })
 
     })
@@ -78,5 +88,5 @@ export const userApi = createApi({
 
 export const {useUserHomeQuery,useGetUserProfileQuery,useUpdateProfileMutation,useSendOtpMutation,
     useVerifyOtpMutation,useChangePasswordMutation,useGetOrdersQuery,useCancelOrderMutation,
-    useGetUserAddressQuery,
+    useGetUserAddressQuery,useAddUserAddressMutation,useUpdatePrimaryAddressMutation
 } = userApi
