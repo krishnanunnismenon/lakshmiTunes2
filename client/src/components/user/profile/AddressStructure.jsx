@@ -4,11 +4,11 @@ import * as Yup from 'yup';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { TabsContent } from '@/components/ui/tabs';
-import { PenSquare, Plus, Check } from 'lucide-react';
+import { PenSquare, Plus, Check, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useGetUserAddressQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation } from '@/services/api/user/userApi';
+import { useGetUserAddressQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation, useUpdateUserAddressMutation,useDeleteUserAddressMutation } from '@/services/api/user/userApi';
 import { useToast } from '@/hooks/use-toast';
 
 const addressSchema = Yup.object().shape({
@@ -21,20 +21,25 @@ const addressSchema = Yup.object().shape({
 
 const AddressStructure = () => {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const { data: addresses, isLoading } = useGetUserAddressQuery();
   const [addAddress, { isLoading: isAdding }] = useAddUserAddressMutation();
+  const [updateAddress, { isLoading: isUpdating }] = useUpdateUserAddressMutation();
   const [updatePrimaryAddress] = useUpdatePrimaryAddressMutation();
+  const [deleteAddress] = useDeleteUserAddressMutation()
   const { toast } = useToast();
 
   const handleAddAddress = async (values, { resetForm }) => {
     try {
+      
       await addAddress(values).unwrap();
-      setIsAddingAddress(false);
+      
       resetForm();
       toast({
         description: "Address added successfully",
         className: "bg-green-500 text-white",
       });
+      setIsAddingAddress(false)
     } catch (error) {
       toast({
         description: "Failed to add address",
@@ -42,6 +47,24 @@ const AddressStructure = () => {
       });
     }
   };
+
+  const handleEditAddress = async (values, { resetForm }) => {
+    try {
+      await updateAddress({ id: editingAddress._id, ...values }).unwrap();
+      resetForm();
+      toast({
+        description: "Address updated successfully",
+        className: "bg-green-500 text-white",
+      });
+      setEditingAddress(null);
+    } catch (error) {
+      toast({
+        description: "Failed to update address",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   const handleSetPrimary = async (addressId) => {
     try {
@@ -57,6 +80,21 @@ const AddressStructure = () => {
       });
     }
   };
+
+  const handleDeleteButton = async(addressId)=>{
+    try {
+      await deleteAddress(addressId).unwrap();
+      toast({
+        description: "Address deleted successfully",
+        className: "bg-green-500 text-white",
+      })
+    } catch (error) {
+      toast({
+        description: "Failed to delete address",
+        variant: "destructive",
+      });
+    }
+  }
 
   return (
     <TabsContent value="address">
@@ -157,9 +195,76 @@ const AddressStructure = () => {
                             'Set as Primary'
                           )}
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <PenSquare className="w-4 h-4 mr-2" />
-                          Edit
+                        <Dialog open={editingAddress && editingAddress._id === address._id} onOpenChange={(open) => !open && setEditingAddress(null)}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" onClick={() => setEditingAddress(address)}>
+                              <PenSquare className="w-4 h-4 mr-2" />
+                              Edit
+                            </Button>
+                          </DialogTrigger>
+                          
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Edit Address</DialogTitle>
+                            </DialogHeader>
+                            <Formik
+                              initialValues={{
+                                street: address.street,
+                                city: address.city,
+                                state: address.state,
+                                zipCode: address.zipCode,
+                                country: address.country,
+                              }}
+                              validationSchema={addressSchema}
+                              onSubmit={handleEditAddress}
+                            >
+                              {({ errors, touched }) => (
+                                <Form className="space-y-4">
+                                  <div>
+                                    <Label htmlFor="street">Street</Label>
+                                    <Field name="street" as={Input} id="street" />
+                                    {errors.street && touched.street && <div className="text-red-500">{errors.street}</div>}
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="city">City</Label>
+                                    <Field name="city" as={Input} id="city" />
+                                    {errors.city && touched.city && <div className="text-red-500">{errors.city}</div>}
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="state">State</Label>
+                                    <Field name="state" as={Input} id="state" />
+                                    {errors.state && touched.state && <div className="text-red-500">{errors.state}</div>}
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="zipCode">Zip Code</Label>
+                                    <Field name="zipCode" as={Input} id="zipCode" />
+                                    {errors.zipCode && touched.zipCode && <div className="text-red-500">{errors.zipCode}</div>}
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="country">Country</Label>
+                                    <Field name="country" as={Input} id="country" />
+                                    {errors.country && touched.country && <div className="text-red-500">{errors.country}</div>}
+                                  </div>
+                                  <div className="flex justify-end gap-2">
+                                    <Button type="button" variant="outline" onClick={() => setEditingAddress(null)}>
+                                      Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={isUpdating}>
+                                      {isUpdating ? 'Updating...' : 'Update Address'}
+                                    </Button>
+                                  </div>
+                                </Form>
+                              )}
+                            </Formik>
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => handleDeleteButton(address._id)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
                         </Button>
                       </div>
                     </div>

@@ -35,11 +35,22 @@ const productSchema = new mongoose.Schema(
             type:Number,
             required:true
         },
+        maxQuantity:{
+            type:Number,
+            min:1,
+            default:5
+        },
         listed:{
             type:Boolean,
             default:true,
             required:true
         },
+        rating:{
+            type:Number,
+            required:true,
+            default:0
+        },
+        
         
         
     },

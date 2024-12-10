@@ -81,6 +81,21 @@ export const userApi = createApi({
                 method:"PUT"
             }),
             invalidatesTags:['Address']
+        }),
+        updateUserAddress: builder.mutation({
+            query:({id,...address})=>({
+                url:`user/addresses/${id}`,
+                method:'PUT',
+                body:address
+            }),
+            invalidatesTags:['Address']
+        }),
+        deleteUserAddress:builder.mutation({
+            query:(id)=>({
+                url:`user/addresses/${id}`,
+                method:'DELETE'
+            }),
+            invalidatesTags:['Address']
         })
 
     })
@@ -88,5 +103,5 @@ export const userApi = createApi({
 
 export const {useUserHomeQuery,useGetUserProfileQuery,useUpdateProfileMutation,useSendOtpMutation,
     useVerifyOtpMutation,useChangePasswordMutation,useGetOrdersQuery,useCancelOrderMutation,
-    useGetUserAddressQuery,useAddUserAddressMutation,useUpdatePrimaryAddressMutation
+    useGetUserAddressQuery,useAddUserAddressMutation,useUpdatePrimaryAddressMutation,useUpdateUserAddressMutation,useDeleteUserAddressMutation
 } = userApi

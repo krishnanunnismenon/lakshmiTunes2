@@ -11,11 +11,7 @@ export function ProductCard({ product }) {
 
   const handleAddToCart = async () => {
     try {
-    //   await addToCart(product._id).unwrap()
-    //   toast({
-    //     description: "Added to cart successfully!",
-    //     duration: 2000,
-    //   })
+   
     } catch (error) {
       toast({
         description: "Failed to add to cart",

@@ -36,7 +36,7 @@ const ProfilePageStructure = () => {
 
 
   const { data: user, isLoading: isLoadingUser } = useGetUserProfileQuery();
-  console.log(user);
+ 
   
   const { data: orders, isLoading: isLoadingOrders } = useGetOrdersQuery();
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
@@ -55,7 +55,7 @@ const handleUpdateProfile = async (event) => {
     const newPhone = formData.get('phone');
 
     if (newEmail !== user.email) {
-      // If email is changed, send OTP first
+      
       try {
         await sendOtp({ email: newEmail }).unwrap();
         setIsVerifyingEmail(true);
@@ -70,7 +70,7 @@ const handleUpdateProfile = async (event) => {
         });
       }
     } else {
-      // If only name is changed, update directly
+
       try {
         await updateProfile({ name: newName , phone: newPhone}).unwrap();
         setIsEditingProfile(false);

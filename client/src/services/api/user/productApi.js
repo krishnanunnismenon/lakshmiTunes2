@@ -17,14 +17,21 @@ const productApi = userApi.injectEndpoints({
         }),
         getProductById: builder.query({
             query:(id)=>({
-                url:`user/products/${id}`,
+                url:`user/products/individual/${id}`,
                 method:"GET"
             }),
             providesTags: (result, error, id) => [{ type: 'Product', id }]
         }),
+        getCart: builder.query({
+            query:()=>({
+                url:`user/products/cart`,
+                method:"GET"
+            }),
+            providesTags:['Cart']
+          }),
         addToCart: builder.mutation({
             query:({productId,quantity})=>({
-                url:'cart/add',
+                url:'user/products/cart/add',
                 method:"POST",
                 body:{productId,quantity}
             }),
@@ -42,15 +49,17 @@ const productApi = userApi.injectEndpoints({
           }),
           addReview: builder.mutation({
             query: ({ productId, rating, comment }) => ({
-              url: `products/${productId}/reviews`,
+              url: `user/products/${productId}/reviews`,
               method: 'POST',
               body: { rating, comment }
             }),
             invalidatesTags: (result, error, id) => [{ type: 'Product', id }]
-          })
+          }),
+          
     })
 })
 
 export const {useGetNewProductsQuery,useGetProductByIdQuery
     ,useAddToCartMutation,useToggleWishlistMutation,
-    useAddReviewMutation,useGetAllProductsQuery} = productApi
+    useAddReviewMutation,useGetAllProductsQuery,
+    useGetCartQuery} = productApi

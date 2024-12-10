@@ -17,7 +17,7 @@ const Header = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const currentUser = useSelector(selectCurrentUser)
-  console.log(currentUser)
+  
 
   const handleLogout = () => {
     dispatch(logOut())

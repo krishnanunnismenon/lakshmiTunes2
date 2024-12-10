@@ -12,6 +12,19 @@ const addressSchema = new mongoose.Schema({
   }
 });
 
+const cartItemSchema = new mongoose.Schema({
+
+  product: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Product', 
+      required: true 
+  },
+  quantity: { 
+      type: Number, 
+      required: true, 
+      min: 1 },
+});
+
 
 const userSchema = new mongoose.Schema(
   {
@@ -52,6 +65,11 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
     addresses: [addressSchema],
+
+
+    cart: [cartItemSchema],
+
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }]
   },
   { timestamps: true }
 );

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Star, Heart, ChevronLeft, ChevronRight, Minus, Plus, Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useGetProductByIdQuery, useAddToCartMutation, useToggleWishlistMutation } from '@/services/api/user/productApi'
+import { useGetProductByIdQuery, useAddToCartMutation, useToggleWishlistMutation,useGetCartQuery } from '@/services/api/user/productApi'
+import { toast } from '@/hooks/use-toast'
 
 export default function ProductDetail() {
   const { productId } = useParams()
@@ -14,9 +15,23 @@ export default function ProductDetail() {
   const [isZoomed, setIsZoomed] = useState(false)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   
+  
   const { data: product, isLoading, error } = useGetProductByIdQuery(productId)
   const [addToCart, { isLoading: isAddingToCart }] = useAddToCartMutation()
   const [toggleWishlist, { isTogglingWishlist }] = useToggleWishlistMutation()
+  
+  const { data: cart } = useGetCartQuery()
+  
+  const maxQuantity = Math.min(
+    product?.stock, 
+    product?.maxQuantity - (cart?.items?.find(item => item.product._id === productId)?.quantity || 0)
+  );
+
+  useEffect(() => {
+    if (product && maxQuantity > 0) {
+      setQuantity(q => Math.min(Math.max(1, q), maxQuantity));
+    }
+  }, [product, maxQuantity]);
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen">
@@ -27,6 +42,9 @@ export default function ProductDetail() {
   if (error) return <div className="text-center text-red-500">Error loading product</div>
 
   if (!product) return <div className="text-center">Product not found</div>
+
+  
+  
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => 
@@ -42,9 +60,23 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     try {
-      await addToCart({ productId, quantity }).unwrap()
+      await addToCart({ productId, quantity }).unwrap();
+      toast({
+        title: "Success",
+        description: "Product added to cart successfully",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      })
     } catch (error) {
       console.error('Failed to add to cart:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add product to cart",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      })
     }
   }
 
@@ -158,6 +190,7 @@ export default function ProductDetail() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                disabled={quantity <= 1}
               >
                 <Minus className="w-4 h-4" />
               </Button>
@@ -165,13 +198,14 @@ export default function ProductDetail() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setQuantity(q => Math.min(product.inStock, q + 1))}
+                onClick={() => setQuantity(q => Math.min(maxQuantity, q + 1))}
+                disabled={quantity >= maxQuantity}
               >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              {product.inStock} units available
+              {product.stock > 0 ? `${product.stock} units available` : 'Out of stock'}
             </p>
           </div>
 
@@ -179,12 +213,12 @@ export default function ProductDetail() {
             <Button
               className="flex-1"
               onClick={handleAddToCart}
-              disabled={isAddingToCart}
+              disabled={isAddingToCart || product.stock === 0 || maxQuantity === 0}
             >
               {isAddingToCart ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : null}
-              Add to Cart
+              {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button
               variant="outline"
