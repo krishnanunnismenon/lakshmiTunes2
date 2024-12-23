@@ -19,12 +19,11 @@ import {
   useGetUserProfileQuery,
   useUpdateProfileMutation,
   useChangePasswordMutation,
-  useGetOrdersQuery,
-  useCancelOrderMutation,
   useSendOtpMutation,
   useVerifyOtpMutation
 } from '@/services/api/user/userApi';
 import AddressStructure from './profile/AddressStructure';
+import OrdersStructure from './profile/OrdersStructure';
 
 const ProfilePageStructure = () => {
   const navigate = useNavigate();
@@ -38,12 +37,12 @@ const ProfilePageStructure = () => {
   const { data: user, isLoading: isLoadingUser } = useGetUserProfileQuery();
  
   
-  const { data: orders, isLoading: isLoadingOrders } = useGetOrdersQuery();
+  
   const [updateProfile, { isLoading: isUpdating }] = useUpdateProfileMutation();
 const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
 const [verifyOtp, { isLoading: isVerifyingOtp }] = useVerifyOtpMutation();
   const [changePassword, { isLoading: isChangingPw }] = useChangePasswordMutation();
-  const [cancelOrder, { isLoading: isCancelling }] = useCancelOrderMutation();
+  
 
 
 
@@ -149,22 +148,6 @@ const handleUpdateProfile = async (event) => {
         });
     }
 };
-
-const handleCancelOrder = async (orderId) => {
-    try {
-        await cancelOrder(orderId).unwrap();
-        toast({
-        description: "Order cancelled successfully",
-        className: "bg-green-500 text-white",
-      });
-    } catch (error) {
-        toast({
-            description: "Failed to cancel order",
-        variant: "destructive",
-      });
-    }
-  };
-  
 
   
   if (isLoadingUser) {
@@ -322,51 +305,7 @@ const handleCancelOrder = async (orderId) => {
             </TabsContent>
 
             <TabsContent value="orders">
-              {isLoadingOrders ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                </div>
-              ) : 
-              orders?.length > 0 ? (
-                <div className="space-y-4">
-                  {orders.map((order) => (
-                    <Card key={order._id}>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-semibold">Order #{order._id}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Placed on {new Date(order.createdAt).toLocaleDateString()}
-                            </p>
-                            <p className="text-sm font-medium mt-2">
-                              Status: <span className="text-primary">{order.status}</span>
-                            </p>
-                          </div>
-                          {order.status === 'pending' && (
-                            <Button 
-                              variant="destructive" 
-                              size="sm"
-                              onClick={() => handleCancelOrder(order._id)}
-                              disabled={isCancelling}
-                            >
-                              {isCancelling ? (
-                                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                              ) : (
-                                <X className="w-4 h-4 mr-2" />
-                              )}
-                              Cancel Order
-                            </Button>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No orders found
-                </div>
-              )}
+              <OrdersStructure/>
             </TabsContent>
 
             <AddressStructure/>

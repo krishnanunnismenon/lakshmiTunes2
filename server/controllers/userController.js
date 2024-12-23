@@ -179,7 +179,7 @@ export const editAddress = async(req,res)=>{
   try {
     const userId = req.user.userId;
     const addressId = req.params.id;
-    const { street, city, state, zipCode, country } = req.body;
+    const { name,house, city, state, pincode, country,phone } = req.body;
     
     
     const user = await User.findOneAndUpdate(
@@ -188,19 +188,20 @@ export const editAddress = async(req,res)=>{
         $set: {
           "addresses.$": {
             _id: addressId,
-            street,
+            name,
+            house,
             city,
             state,
-            zipCode,
+            pincode,
             country,
-
+            phone
             
           }
         }
       },
       { new: true, projection: { addresses: { $elemMatch: { _id: addressId } } } }
     );
-    console.log("hello edit audio")
+    
     if (!user) {
       return res.status(404).json({ message: "User or address not found" });
     }

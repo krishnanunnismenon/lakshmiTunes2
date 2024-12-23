@@ -21,6 +21,13 @@ import ShopPage from "./pages/user/ShopPage";
 import { UserProtectRoute } from "./utils/UserProtectRoute";
 import UserProfilePage from "./pages/user/UserProfilePage";
 import { UserExistRoute } from "./utils/UserExistRoute";
+import CartPage from "./pages/user/CartPage";
+import CheckOutPage from "./pages/user/CheckOutPage";
+import PaymentPage from "./pages/user/PaymentPage";
+import PaymentSuccessPage from "./pages/user/PaymentSuccessPage";
+import OrdersPage from "./pages/admin/OrdersPage";
+import IndividualOrderPage from "./pages/admin/IndividualOrderPage";
+import UserIndividualOrderPage from "./pages/user/UserIndividualOrderPage";
 
 const App = () => {
   const GoogleAuthSignWrapper = () => {
@@ -58,11 +65,16 @@ const App = () => {
         //user Routes
         <Route element={<UserExistRoute/>}>
         <Route path="profile" element={<UserProfilePage/>}/>
+        <Route path="profile/orders/:orderId" element={<UserIndividualOrderPage/>}/>
         </Route>
         <Route path="home" element={<HomePage />} />
         <Route path="product/:productId" element={<UserProductPage/>}/>
 
         <Route path="shop" element={<ShopPage/>}/>
+        <Route path="cart" element={<CartPage/>}/>
+        <Route path="checkout" element={<CheckOutPage/>}/>
+        <Route path="payment/:orderId" element={<PaymentPage/>}/>
+        <Route path="payment/:orderId/success" element={<PaymentSuccessPage/>}/>
         //admin Routes
         <Route element={<AdminProtectedRoute allowedRoute={"admin"}/>}>
         <Route path="admin/login" element={<AdminLogin />} />
@@ -77,6 +89,10 @@ const App = () => {
 
         <Route path="admin/categories" element={<CategoriesPage/>}/>
         <Route path="admin/categories/add-category" element={<AddNewCategory/>}/>
+
+        <Route path="admin/orders" element={<OrdersPage/>}/>
+        <Route path="admin/orders/:individualOrder" element={<IndividualOrderPage/>}/>
+        
         
         </Route>
         

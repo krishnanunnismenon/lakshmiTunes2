@@ -8,15 +8,17 @@ import { PenSquare, Plus, Check, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useGetUserAddressQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation, useUpdateUserAddressMutation,useDeleteUserAddressMutation } from '@/services/api/user/userApi';
+import { useGetUserAddressQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation, useUpdateUserAddressMutation, useDeleteUserAddressMutation } from '@/services/api/user/userApi';
 import { useToast } from '@/hooks/use-toast';
 
 const addressSchema = Yup.object().shape({
-  street: Yup.string().required('Street is required'),
+  name: Yup.string().required('Name is required'),
+  house: Yup.string().required('House/Street is required'),
   city: Yup.string().required('City is required'),
   state: Yup.string().required('State is required'),
-  zipCode: Yup.string().required('Zip Code is required'),
+  pincode: Yup.string().required('Pincode is required'),
   country: Yup.string().required('Country is required'),
+  phone: Yup.number().typeError('Phone must be a number').required('Phone number is required'),
 });
 
 const AddressStructure = () => {
@@ -26,14 +28,12 @@ const AddressStructure = () => {
   const [addAddress, { isLoading: isAdding }] = useAddUserAddressMutation();
   const [updateAddress, { isLoading: isUpdating }] = useUpdateUserAddressMutation();
   const [updatePrimaryAddress] = useUpdatePrimaryAddressMutation();
-  const [deleteAddress] = useDeleteUserAddressMutation()
+  const [deleteAddress] = useDeleteUserAddressMutation();
   const { toast } = useToast();
 
   const handleAddAddress = async (values, { resetForm }) => {
     try {
-      
       await addAddress(values).unwrap();
-      
       resetForm();
       toast({
         description: "Address added successfully",
@@ -65,7 +65,6 @@ const AddressStructure = () => {
     }
   };
 
-
   const handleSetPrimary = async (addressId) => {
     try {
       await updatePrimaryAddress(addressId).unwrap();
@@ -81,7 +80,7 @@ const AddressStructure = () => {
     }
   };
 
-  const handleDeleteButton = async(addressId)=>{
+  const handleDeleteButton = async(addressId) => {
     try {
       await deleteAddress(addressId).unwrap();
       toast({
@@ -115,11 +114,13 @@ const AddressStructure = () => {
                 </DialogHeader>
                 <Formik
                   initialValues={{
-                    street: '',
+                    name: '',
+                    house: '',
                     city: '',
                     state: '',
-                    zipCode: '',
+                    pincode: '',
                     country: '',
+                    phone: '',
                   }}
                   validationSchema={addressSchema}
                   onSubmit={handleAddAddress}
@@ -127,9 +128,14 @@ const AddressStructure = () => {
                   {({ errors, touched }) => (
                     <Form className="space-y-4">
                       <div>
-                        <Label htmlFor="street">Street</Label>
-                        <Field name="street" as={Input} id="street" />
-                        {errors.street && touched.street && <div className="text-red-500">{errors.street}</div>}
+                        <Label htmlFor="name">Name</Label>
+                        <Field name="name" as={Input} id="name" />
+                        {errors.name && touched.name && <div className="text-red-500">{errors.name}</div>}
+                      </div>
+                      <div>
+                        <Label htmlFor="house">House/Street</Label>
+                        <Field name="house" as={Input} id="house" />
+                        {errors.house && touched.house && <div className="text-red-500">{errors.house}</div>}
                       </div>
                       <div>
                         <Label htmlFor="city">City</Label>
@@ -142,14 +148,19 @@ const AddressStructure = () => {
                         {errors.state && touched.state && <div className="text-red-500">{errors.state}</div>}
                       </div>
                       <div>
-                        <Label htmlFor="zipCode">Zip Code</Label>
-                        <Field name="zipCode" as={Input} id="zipCode" />
-                        {errors.zipCode && touched.zipCode && <div className="text-red-500">{errors.zipCode}</div>}
+                        <Label htmlFor="pincode">Pincode</Label>
+                        <Field name="pincode" as={Input} id="pincode" />
+                        {errors.pincode && touched.pincode && <div className="text-red-500">{errors.pincode}</div>}
                       </div>
                       <div>
                         <Label htmlFor="country">Country</Label>
                         <Field name="country" as={Input} id="country" />
                         {errors.country && touched.country && <div className="text-red-500">{errors.country}</div>}
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Field name="phone" as={Input} id="phone" type="tel" />
+                        {errors.phone && touched.phone && <div className="text-red-500">{errors.phone}</div>}
                       </div>
                       <div className="flex justify-end gap-2">
                         <Button type="button" variant="outline" onClick={() => setIsAddingAddress(false)}>
@@ -174,9 +185,11 @@ const AddressStructure = () => {
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p>{address.street}</p>
-                        <p>{address.city}, {address.state} {address.zipCode}</p>
+                        <p>{address.name}</p>
+                        <p>{address.house}</p>
+                        <p>{address.city}, {address.state} {address.pincode}</p>
                         <p>{address.country}</p>
+                        <p>Phone: {address.phone}</p>
                       </div>
                       <div className="flex flex-col items-end">
                         <Button 
@@ -209,11 +222,13 @@ const AddressStructure = () => {
                             </DialogHeader>
                             <Formik
                               initialValues={{
-                                street: address.street,
+                                name: address.name,
+                                house: address.house,
                                 city: address.city,
                                 state: address.state,
-                                zipCode: address.zipCode,
+                                pincode: address.pincode,
                                 country: address.country,
+                                phone: address.phone,
                               }}
                               validationSchema={addressSchema}
                               onSubmit={handleEditAddress}
@@ -221,9 +236,14 @@ const AddressStructure = () => {
                               {({ errors, touched }) => (
                                 <Form className="space-y-4">
                                   <div>
-                                    <Label htmlFor="street">Street</Label>
-                                    <Field name="street" as={Input} id="street" />
-                                    {errors.street && touched.street && <div className="text-red-500">{errors.street}</div>}
+                                    <Label htmlFor="name">Name</Label>
+                                    <Field name="name" as={Input} id="name" />
+                                    {errors.name && touched.name && <div className="text-red-500">{errors.name}</div>}
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="house">House/Street</Label>
+                                    <Field name="house" as={Input} id="house" />
+                                    {errors.house && touched.house && <div className="text-red-500">{errors.house}</div>}
                                   </div>
                                   <div>
                                     <Label htmlFor="city">City</Label>
@@ -236,14 +256,19 @@ const AddressStructure = () => {
                                     {errors.state && touched.state && <div className="text-red-500">{errors.state}</div>}
                                   </div>
                                   <div>
-                                    <Label htmlFor="zipCode">Zip Code</Label>
-                                    <Field name="zipCode" as={Input} id="zipCode" />
-                                    {errors.zipCode && touched.zipCode && <div className="text-red-500">{errors.zipCode}</div>}
+                                    <Label htmlFor="pincode">Pincode</Label>
+                                    <Field name="pincode" as={Input} id="pincode" />
+                                    {errors.pincode && touched.pincode && <div className="text-red-500">{errors.pincode}</div>}
                                   </div>
                                   <div>
                                     <Label htmlFor="country">Country</Label>
                                     <Field name="country" as={Input} id="country" />
                                     {errors.country && touched.country && <div className="text-red-500">{errors.country}</div>}
+                                  </div>
+                                  <div>
+                                    <Label htmlFor="phone">Phone</Label>
+                                    <Field name="phone" as={Input} id="phone" type="tel" />
+                                    {errors.phone && touched.phone && <div className="text-red-500">{errors.phone}</div>}
                                   </div>
                                   <div className="flex justify-end gap-2">
                                     <Button type="button" variant="outline" onClick={() => setEditingAddress(null)}>
@@ -259,12 +284,12 @@ const AddressStructure = () => {
                           </DialogContent>
                         </Dialog>
                         <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            onClick={() => handleDeleteButton(address._id)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteButton(address._id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
                         </Button>
                       </div>
                     </div>
@@ -282,3 +307,4 @@ const AddressStructure = () => {
 };
 
 export default AddressStructure;
+

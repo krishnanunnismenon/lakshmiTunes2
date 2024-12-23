@@ -47,18 +47,7 @@ export const userApi = createApi({
                 body: passwordData
             })
         }),
-        getOrders: builder.query({
-            query: () => ({
-                url: "user/orders",
-                method: "GET"
-            })
-        }),
-        cancelOrder: builder.mutation({
-            query: (orderId) => ({
-                url: `user/cancel-order/${orderId}`,
-                method: "PUT"
-            })
-        }),
+        
         getUserAddress:builder.query({
             query:()=>({
                 url:'user/addresses',
@@ -102,6 +91,6 @@ export const userApi = createApi({
 })
 
 export const {useUserHomeQuery,useGetUserProfileQuery,useUpdateProfileMutation,useSendOtpMutation,
-    useVerifyOtpMutation,useChangePasswordMutation,useGetOrdersQuery,useCancelOrderMutation,
+    useVerifyOtpMutation,useChangePasswordMutation,
     useGetUserAddressQuery,useAddUserAddressMutation,useUpdatePrimaryAddressMutation,useUpdateUserAddressMutation,useDeleteUserAddressMutation
 } = userApi

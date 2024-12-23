@@ -1,16 +1,5 @@
 import mongoose from "mongoose";
-
-const addressSchema = new mongoose.Schema({
-  street: String,
-  city: String,
-  state: String,
-  zipCode: String,
-  country: String,
-  isPrimary: {
-    type: Boolean,
-    default: false
-  }
-});
+import {addressSchema} from "./addressModel.js";
 
 const cartItemSchema = new mongoose.Schema({
 
@@ -75,4 +64,5 @@ const userSchema = new mongoose.Schema(
 );
 
 const User = mongoose.model("User", userSchema);
+
 export default User;

@@ -222,7 +222,7 @@ export const googleLogin = async (req, res) => {
 
 export const refreshToken = async(req,res)=>{
     const refreshToken = req.cookies?.refreshToken;
-    console.log("hello")
+    
     if(!refreshToken){
         return res.status(401).json({message:"Refresh Token not found"});
     }

@@ -24,14 +24,14 @@ const productApi = userApi.injectEndpoints({
         }),
         getCart: builder.query({
             query:()=>({
-                url:`user/products/cart`,
+                url:`user/cart`,
                 method:"GET"
             }),
             providesTags:['Cart']
           }),
         addToCart: builder.mutation({
             query:({productId,quantity})=>({
-                url:'user/products/cart/add',
+                url:'user/cart/add',
                 method:"POST",
                 body:{productId,quantity}
             }),

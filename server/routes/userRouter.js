@@ -2,6 +2,8 @@ import express from 'express'
 import { userHome,userProfile,updateProfile,sendOTP,getUserAddress,addNewUserAddress,updateAddressPrimaryStatus,editAddress, deleteAddress } from '../controllers/userController.js'
 import productRouter from './productRouter.js'
 import { verifyToken } from '../middlewares/jwtVerify.js'
+import cartRouter from './cartRouter.js'
+import orderRouter from './orderRouter.js'
 
 
 const userRouter = express.Router()
@@ -16,6 +18,8 @@ userRouter.post('/addresses',verifyToken,addNewUserAddress)
 userRouter.put('/addresses/:id',verifyToken,editAddress)
 userRouter.delete('/addresses/:id',verifyToken,deleteAddress)
 userRouter.put('/addresses/:id/primary',verifyToken,updateAddressPrimaryStatus)
-userRouter.use('/products',productRouter)
+userRouter.use('/products',productRouter);
+userRouter.use('/cart',cartRouter);
+userRouter.use('/orders',orderRouter);
 
 export default userRouter

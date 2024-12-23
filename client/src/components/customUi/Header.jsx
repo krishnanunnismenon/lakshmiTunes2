@@ -89,8 +89,8 @@ const Header = () => {
                   <span className="sr-only">User account</span>
                 </Button>
               )}
-              <Button variant="ghost" size="sm" className="text-white p-2 h-8 w-8">
-                <ShoppingCart className="h-5 w-5" />
+              <Button variant="ghost" size="sm" onClick={() => navigate('/cart')} className="text-white p-2 h-8 w-8">
+                <ShoppingCart  className="h-5 w-5" />
                 <span className="sr-only">Shopping cart</span>
               </Button>
             </div>
