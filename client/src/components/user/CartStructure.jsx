@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react'
 import CartItem from './cart/CartItem'
 import CartSummary from './cart/CartSummary'
 import { useGetCartQuery, useClearCartMutation, useUpdateCartMutation, useApplyCouponMutation } from '@/services/api/user/cartApi'
+import Breadcrumbs from '../customUi/Breadcrumbs'
 
 export default function CartStructure() {
   const [couponCode, setCouponCode] = useState('')
@@ -63,11 +64,18 @@ export default function CartStructure() {
   }
 
   const handleCheckout = () => {
-    navigate('/checkout')
+    if(cart.length === 0){
+      console.log('Add some items to the cart to proceed')
+      
+    }else{
+      
+      navigate('/checkout')
+    }
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Breadcrumbs currentPage="Cart" />
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <div className="bg-card rounded-lg shadow-sm">

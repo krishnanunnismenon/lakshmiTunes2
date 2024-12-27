@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProcessPaymentMutation } from '@/services/api/user/cartApi';
 import OrderDetails from './payment/OrderDetails';
+import Breadcrumbs from '../customUi/Breadcrumbs';
 
 export default function PaymentStructure() {
   const [couponCode, setCouponCode] = useState('');
@@ -44,6 +45,7 @@ export default function PaymentStructure() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+    <Breadcrumbs currentPage="Payment" />
       <div className="grid md:grid-cols-2 gap-8">
         <div>
           <Card>

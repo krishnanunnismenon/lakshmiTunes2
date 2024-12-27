@@ -1,10 +1,11 @@
 import React from 'react'
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { useGetNewProductsQuery } from '@/services/api/user/productApi'
 
 const NewItems = () => {
-  const { data: newProducts, isLoading, error } = useGetNewProductsQuery()
+  const { productId } = useParams(); 
+  const { data: newProducts, isLoading, error } = useGetNewProductsQuery(productId)
 
   if (isLoading) return <div>Loading...</div>
   if (error) return <div>Error: {error.message}</div>
@@ -38,3 +39,4 @@ const NewItems = () => {
 }
 
 export default NewItems
+

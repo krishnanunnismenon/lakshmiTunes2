@@ -1,25 +1,35 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-// import { useAddToCartMutation } from '../services/api'
+import { useAddToCartMutation } from '@/services/api/user/productApi'
 import { useToast } from '@/hooks/use-toast'
 
 export function ProductCard({ product }) {
-//   const [addToCart] = useAddToCartMutation()
+  const [addToCart] = useAddToCartMutation()
+  const [isAddingToCart,setIsAddingToCart] = useState(false)
   const { toast } = useToast()
 
   const handleAddToCart = async () => {
+    setIsAddingToCart(true);
     try {
-   
-    } catch (error) {
+      await addToCart({ productId: product._id, quantity: 1 }).unwrap();
       toast({
-        description: "Failed to add to cart",
-        duration: 2000,
+        title: "Success",
+        description: "Product added to cart successfully",
+      })
+    } catch (error) {
+      console.error('Failed to add to cart:', error)
+      toast({
+        title: "Error",
+        description: "Failed to add product to cart",
         variant: "destructive",
       })
+    } finally {
+      setIsAddingToCart(false);
     }
   }
+
 
   return (
     <Card className="group overflow-hidden rounded-xl transition-all hover:shadow-lg">
@@ -43,12 +53,13 @@ export function ProductCard({ product }) {
             ${product.price.toFixed(2)}
           </p>
           <Button 
-            onClick={handleAddToCart}
-            size="sm"
-            className="transition-all hover:scale-105"
-          >
-            Add to Cart
-          </Button>
+          onClick={handleAddToCart}
+          size="sm"
+          className="transition-all hover:scale-105"
+          disabled={isAddingToCart}
+        >
+        {isAddingToCart ? "Adding..." : "Add to Cart"}
+      </Button>
         </div>
       </CardContent>
     </Card>

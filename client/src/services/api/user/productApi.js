@@ -3,15 +3,21 @@ import { userApi } from "./userApi";
 const productApi = userApi.injectEndpoints({
     endpoints:(builder)=>({
         getNewProducts: builder.query({
-            query:()=>({
-                url:"user/products/new",
-                method:"GET"
-            })
+            query: (currentProductId = '') => `user/products/new?exclude=${currentProductId}`,  
         }),
         getAllProducts:builder.query({
-            query:()=>({
+            query:(params)=>({
                 url:'user/products/all-products',
-                method:"GET"
+                method:"GET",
+                params:{
+                    page:params.page,
+                    limit: params.limit,
+                    sort: params.sort,
+                    order: params.order,
+                    search: params.search,
+                    minPrice: params.minPrice,
+                    maxPrice: params.maxPrice
+                }
             }),
             providesTags: ["Product"]
         }),

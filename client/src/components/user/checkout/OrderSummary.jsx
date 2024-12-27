@@ -14,7 +14,7 @@ export default function OrderSummary({ cart, selectedAddress }) {
     total + (item.product.price * item.quantity), 0
   ) || 0
  
-  
+
   const shipping = 0 
   const total = subtotal + shipping
 
@@ -38,7 +38,7 @@ export default function OrderSummary({ cart, selectedAddress }) {
         }))
         
       }).unwrap()
-      
+     
 
       
       navigate(`/payment/${order._id}`)

@@ -21,6 +21,14 @@ const orderApi = adminApi.injectEndpoints({
             }),
             invalidatesTags:["IndividualOrder"]
         }),
+        updateOrderItemStatus:builder.mutation({
+            query: ({ orderId, itemId, status }) => ({
+                url: `/admin/orders/${orderId}/status/${itemId}`,
+                method: 'PATCH',
+                body: { status },
+              }),
+              invalidatesTags: ['Order'],
+        }),
         getIndividualOrderDetail:builder.query({    
             query:(individualOrder)=>({
                 url:`/admin/orders/${individualOrder}`,
@@ -33,6 +41,6 @@ const orderApi = adminApi.injectEndpoints({
 })
 
 export const {useGetGroupedOrdersQuery,useUpdateOrderStatusMutation,
-    useGetIndividualOrderDetailQuery
+    useGetIndividualOrderDetailQuery, useUpdateOrderItemStatusMutation
 } = orderApi
 

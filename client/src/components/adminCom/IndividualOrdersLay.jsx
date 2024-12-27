@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useGetIndividualOrderDetailQuery, useUpdateOrderStatusMutation } from '@/services/api/admin/orderApi';
+import { useGetIndividualOrderDetailQuery, useUpdateOrderItemStatusMutation } from '@/services/api/admin/orderApi';
 
 const statusColors = {
   'pending': 'text-orange-500',
@@ -31,25 +31,23 @@ const statusColors = {
 
 export default function IndividualOrdersLay() {
   const { individualOrder } = useParams();
-
   const navigate = useNavigate();
   const { data: order, isLoading, error } = useGetIndividualOrderDetailQuery(individualOrder);
-  const [updateStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
+  const [updateItemStatus, { isLoading: isUpdating }] = useUpdateOrderItemStatusMutation();
   const { toast } = useToast();
 
-  const handleStatusUpdate = async (newStatus) => {
+  const handleItemStatusUpdate = async (itemId, newStatus) => {
     try {
-        
-      await updateStatus({ individualOrder, status: newStatus }).unwrap();
+      await updateItemStatus({ orderId: individualOrder, itemId, status: newStatus }).unwrap();
       toast({
         title: "Success",
-        description: "Order status updated successfully",
+        description: "Order item status updated successfully",
         variant: "success"
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update order status",
+        description: "Failed to update order item status",
         variant: "destructive"
       });
     }
@@ -79,6 +77,11 @@ export default function IndividualOrdersLay() {
     );
   }
 
+  const orderStatus = order.items.every(item => item.status === 'delivered') ? 'delivered' :
+                      order.items.every(item => item.status === 'cancelled') ? 'cancelled' :
+                      order.items.some(item => item.status === 'shipped') ? 'shipped' :
+                      order.items.some(item => item.status === 'processing') ? 'processing' : 'pending';
+
   return (
     <div className="container mx-auto py-8 text-white">
       <Button onClick={() => navigate('/admin/orders')} className="mb-4">
@@ -106,24 +109,9 @@ export default function IndividualOrdersLay() {
           <div className="mt-4">
             <h3 className="font-semibold mb-2">Order Status</h3>
             <div className="flex items-center gap-2">
-              <span className={statusColors[order.status]}>
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              <span className={statusColors[orderStatus]}>
+                {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
               </span>
-              <Select
-                onValueChange={handleStatusUpdate}
-                defaultValue={order.status}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Change status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="processing">Processing</SelectItem>
-                  <SelectItem value="shipped">Shipped</SelectItem>
-                  <SelectItem value="delivered">Delivered</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <Table className="mt-4">
@@ -133,6 +121,8 @@ export default function IndividualOrdersLay() {
                 <TableHead className="text-white">Quantity</TableHead>
                 <TableHead className="text-white">Price</TableHead>
                 <TableHead className="text-white">Total</TableHead>
+                <TableHead className="text-white">Status</TableHead>
+                <TableHead className="text-white">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -142,6 +132,24 @@ export default function IndividualOrdersLay() {
                   <TableCell className="text-white">{item.quantity}</TableCell>
                   <TableCell className="text-white">₹{item.price.toFixed(2)}</TableCell>
                   <TableCell className="text-white">₹{(item.quantity * item.price).toFixed(2)}</TableCell>
+                  <TableCell className={`text-white ${statusColors[item.status]}`}>{item.status}</TableCell>
+                  <TableCell className="text-white">
+                    <Select
+                      onValueChange={(newStatus) => handleItemStatusUpdate(item._id, newStatus)}
+                      defaultValue={item.status}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Change status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

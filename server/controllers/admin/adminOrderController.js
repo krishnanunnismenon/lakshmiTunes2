@@ -1,49 +1,43 @@
 import Order from "../../models/orderModel.js"
 
+
 export const getGroupedOrders = async (req, res) => {
-    try {
-      const groupedOrders = await Order.aggregate([
-        {
-          $group: {
-            _id: '$user',
-            orderCount: { $sum: 1 },
-            totalAmount: { $sum: '$total' },
-            latestOrder: { $max: '$createdAt' },
-            orders: { $push: '$$ROOT' }
-          }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'userDetails'
-          }
-        },
-        {
-          $unwind: '$userDetails'
-        },
-        {
-          $project: {
-            userId: '$_id',
-            userName: '$userDetails.name',
-            orderCount: 1,
-            totalAmount: 1,
-            latestOrder: 1,
-            latestOrderId: { $arrayElemAt: ['$orders._id', -1] }
-          }
-        },
-        {
-          $sort: { latestOrder: -1 }
+  try {
+    const groupedOrders = await Order.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'userDetails'
         }
-      ]);
-  
-      res.json(groupedOrders);
-    } catch (error) {
-      console.error('Error fetching grouped orders:', error);
-      res.status(500).json({ message: 'Error fetching grouped orders', error: error.message });
-    }
-  };
+      },
+      {
+        $unwind: '$userDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          userId: '$user',
+          userName: '$userDetails.name',
+          orderDate: '$createdAt',
+          status: 1,
+          total: 1,
+          orderCount: { $size: '$items' }
+        }
+      },
+      {
+        $sort: { orderDate: -1 }
+      }
+    ]);
+    console.log(groupedOrders)
+    res.json(groupedOrders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ message: 'Error fetching orders', error: error.message });
+  }
+};
+
 
 export const updateOrderStatus = async(req,res)=>{
     try {
@@ -91,3 +85,42 @@ export const getIndividualOrderDetail = async(req,res)=>{
     }
 }
 
+export const updateIndividualOrderStatus = async(req,res)=>{
+    try {
+        const { orderId, itemId } = req.params;
+        const { status } = req.body;
+    
+        const order = await Order.findById(orderId);
+    
+        if (!order) {
+          return res.status(404).json({ message: 'Order not found' });
+        }
+    
+        const item = order.items.id(itemId);
+    
+        if (!item) {
+          return res.status(404).json({ message: 'Order item not found' });
+        }
+    
+        item.status = status;
+        
+        const allItemStatuses = order.items.map(item => item.status);
+        if (allItemStatuses.every(s => s === 'delivered')) {
+          order.status = 'delivered';
+        } else if (allItemStatuses.every(s => s === 'cancelled')) {
+          order.status = 'cancelled';
+        } else if (allItemStatuses.some(s => s === 'shipped')) {
+            order.status = 'shipped';
+        } else if (allItemStatuses.some(s => s === 'processing')) {
+          order.status = 'processing';
+        } else {
+            order.status = 'pending';
+        }
+        console.log(allItemStatuses.every(s => s === 'delivered'))
+        await order.save();
+        
+        res.json({ message: 'Order item status updated successfully', order });
+      } catch (error) {
+        res.status(500).json({ message: 'Error updating order item status', error: error.message });
+      }
+}

@@ -35,7 +35,7 @@ export default function AddressForm({ onAddressSubmit }) {
 
   const handleSubmit = async (values, { resetForm }) => {
     try {
-      await addAddress(values).unwrap()
+      const newAddress = await addAddress(values).unwrap()
 
       toast({
         title: "Success",
@@ -43,7 +43,7 @@ export default function AddressForm({ onAddressSubmit }) {
         status: "success"
       })
 
-      onAddressSubmit()
+      onAddressSubmit(newAddress)
       resetForm()
     } catch (error) {
       toast({

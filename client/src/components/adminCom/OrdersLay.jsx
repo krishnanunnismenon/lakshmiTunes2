@@ -14,6 +14,7 @@ import { useGetGroupedOrdersQuery } from '@/services/api/admin/orderApi';
 
 export default function GroupedOrdersTable() {
   const { data: groupedOrders, isLoading } = useGetGroupedOrdersQuery();
+  console.log(groupedOrders)
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -43,11 +44,11 @@ export default function GroupedOrdersTable() {
               <TableRow key={group.userId} className="bg-gray-900">
                 <TableCell className="text-white">{group.userName}</TableCell>
                 <TableCell className="text-white">{group.orderCount}</TableCell>
-                <TableCell className="text-white">₹{group.totalAmount?.toFixed(2)}</TableCell>
-                <TableCell className="text-white">{new Date(group.latestOrder).toLocaleDateString()}</TableCell>
+                <TableCell className="text-white">₹{group.total?.toFixed(2)}</TableCell>
+                <TableCell className="text-white">{new Date(group.orderDate).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <Button
-                    onClick={() => navigate(`/admin/orders/${group.latestOrderId}`)}
+                    onClick={() => navigate(`/admin/orders/${group._id}`)}
                     variant="outline"
                   >
                     View Latest Order

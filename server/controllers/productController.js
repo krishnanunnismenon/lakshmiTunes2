@@ -2,18 +2,27 @@ import Order from "../models/orderModel.js";
 import { Product } from "../models/productModel.js"
 import User from "../models/userModel.js";
 
-export const getNewProducts = async(req,res)=>{
+export const getNewProducts = async (req, res) => {
     try {
-        
-        const newProducts = await Product.find()
-        .sort('-createdAt')
-        .limit(3);
+      const { exclude } = req.query;
+      const limit = 3; 
+  
+      let query = {};
+      if (exclude) {
+        query._id = { $ne: exclude };
+      }
+  
+      const newProducts = await Product.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit);
 
-        res.json(newProducts)
+      
+      
+      res.json(newProducts);
     } catch (error) {
-        res.status(500).json({message:"Error fetching new products",error:error.message})
+      res.status(500).json({ message: 'Error fetching new products', error: error.message });
     }
-}
+  };
 
 export const getIndividualProduct = async(req,res)=>{
     try {
@@ -35,21 +44,63 @@ export const getIndividualProduct = async(req,res)=>{
 
 export const getAllUserProducts = async(req,res)=>{
     try {
-        
-        const allProducts = await Product.find({listed:true}).populate('category', 'name');
-        
-        res.status(200).json(allProducts);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 9;
+        const sort = req.query.sort || 'createdAt';
+        const order = req.query.order || 'desc';
+        const search = req.query.search || '';
+        const minPrice = parseFloat(req.query.minPrice) || 0;
+        const maxPrice = parseFloat(req.query.maxPrice) || Infinity;
+
+        // Sort options
+        const sortOptions = {
+            'price-asc': { price: 1 },
+            'price-desc': { price: -1 },
+            'name-asc': { name: 1 },
+            'name-desc': { name: -1 },
+            'rating-desc': { averageRating: -1 },
+            'createdAt-desc': { createdAt: -1 },
+        };
+        const sortQuery = sortOptions[`${sort}-${order}`] || sortOptions['createdAt-desc'];
+
+        // Base query with name and price filters
+        const query = {
+            name: { $regex: search, $options: 'i' },
+            price: { $gte: minPrice, $lte: maxPrice },
+        };
+
+        // Find all matching products and populate categories
+        const allProducts = await Product.find(query)
+            .populate({
+                path: 'category',
+                match: { isListed: true }, // Only include products whose categories have isListed: true
+            })
+            .sort(sortQuery);
+
+        // Filter out products without a valid category
+        const filteredProducts = allProducts.filter(product => product.category);
+
+        // Pagination
+        const paginatedProducts = filteredProducts.slice((page - 1) * limit, page * limit);
+
+        // Send response
+        res.json({
+            products: paginatedProducts,
+            currentPage: page,
+            totalPages: Math.ceil(filteredProducts.length / limit),
+            total: filteredProducts.length,
+        });
     } catch (error) {
-        console.log(error)
-        res.status(500).json({message:"Unable to send Product information"})
+        res.status(500).json({ message: 'Error fetching products', error: error.message });
     }
+
 }
 
 export const getCart = async(req,res)=>{
     try {
         
         const user = await User.findById(req.user.userId).populate('cart.product');
-        console.log(user.cart)
+        
         res.json(user.cart)
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -58,11 +109,10 @@ export const getCart = async(req,res)=>{
 
 export const addToCart = async (req, res) => {
     try {
-        
+       
       const { productId, quantity } = req.body;
       const user = await User.findById(req.user.userId);
       const product = await Product.findById(productId);
-  
       if (!product) {
         return res.status(404).json({ message: "Product Not Found" });
       }
@@ -151,6 +201,7 @@ export const createOrder = async(req,res)=>{
     try {
         const {addressId,items} = req.body;
         const userId = req.user.userId;
+       
 
         const user = await User.findById(userId);
         if(!user){
@@ -184,6 +235,7 @@ export const createOrder = async(req,res)=>{
             
             
         }
+       
         const order = new Order({
           user:userId,
           items:orderItems,
@@ -245,7 +297,7 @@ export const placeOrder = async(req,res)=>{
         const order = await Order.findById(orderId)
             
 
-        console.log(orderId)
+        
         if(!order){
             return res.status(404).json({message:"order not found"})
         }
@@ -257,21 +309,23 @@ export const placeOrder = async(req,res)=>{
         if(paymentMethod =='cod'){
             order.paymentMethod = 'cod'
             order.status = 'pending';
-            console.log(order)
+            
             await order.save()
             
         }
         //stock quantity - 1
         
         for (let item of order.items) {
-            await Product.findByIdAndUpdate(item, {
-              $inc: { stock: -item.quantity }
-            });
+            await Product.findByIdAndUpdate(item.product, {
+                $inc: { stock: -item.quantity }
+              })
           }
+
         const user = await User.findById(userId);
         user.cart = [];
         
-        
+        // user.save()
+
         res.json({message:"Order placed Successfully",order});
     } catch (error) {
 
