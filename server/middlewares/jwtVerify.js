@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken'
+import User from '../models/userModel.js';
+
 
 export const verifyToken = (req,res,next)=>{
     const token = req.headers["authorization"]?.split(" ")[1];
@@ -12,6 +14,7 @@ export const verifyToken = (req,res,next)=>{
 
     try {
         const decoded = jwt.verify(token,process.env.ACCESS_TOKEN)
+        
         if(!decoded){
             return res.status(401).son({message:"Invalid Access Token"})
         }else{
@@ -31,6 +34,15 @@ export const verifyRole = (roles)=>(req,res,next)=>{
             return res.status(403).json({message:"Request access denied"});
         }
         next()
+    } catch (error) {
+        return res.status(500).json({message:error.message})
+    }
+}
+
+export const verifyBlock = async(req,res)=>{
+    try {
+        console.log('hello')
+        next();
     } catch (error) {
         return res.status(500).json({message:error.message})
     }

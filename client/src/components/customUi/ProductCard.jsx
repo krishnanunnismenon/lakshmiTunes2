@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast'
 
 export function ProductCard({ product }) {
   const [addToCart] = useAddToCartMutation()
-  const [isAddingToCart,setIsAddingToCart] = useState(false)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const { toast } = useToast()
 
   const handleAddToCart = async () => {
@@ -30,6 +30,10 @@ export function ProductCard({ product }) {
     }
   }
 
+  const displayPrice = product.discountedPrice !== null ? product.discountedPrice : product.price;
+  const discountPercentage = product.discountedPrice !== null
+    ? Math.round((1 - product.discountedPrice / product.price) * 100)
+    : 0;
 
   return (
     <Card className="group overflow-hidden rounded-xl transition-all hover:shadow-lg">
@@ -40,6 +44,11 @@ export function ProductCard({ product }) {
             alt={product.name}
             className="h-full w-full object-cover transition-transform group-hover:scale-105"
           />
+          {product.discountedPrice !== null && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-sm font-bold">
+              {discountPercentage}% OFF
+            </div>
+          )}
         </div>
       </Link>
       <CardContent className="p-4">
@@ -49,20 +58,26 @@ export function ProductCard({ product }) {
           </h3>
         </Link>
         <div className="mt-2 flex items-center justify-between">
-          <p className="text-lg font-bold">
-            ${product.price.toFixed(2)}
-          </p>
+          <div>
+            <p className="text-lg font-bold">
+              ₹{displayPrice.toFixed(2)}
+            </p>
+            {product.discountedPrice !== null && (
+              <p className="text-sm text-gray-500 line-through">
+                ₹{product.price.toFixed(2)}
+              </p>
+            )}
+          </div>
           <Button 
-          onClick={handleAddToCart}
-          size="sm"
-          className="transition-all hover:scale-105"
-          disabled={isAddingToCart}
-        >
-        {isAddingToCart ? "Adding..." : "Add to Cart"}
-      </Button>
+            onClick={handleAddToCart}
+            size="sm"
+            className="transition-all hover:scale-105"
+            disabled={isAddingToCart}
+          >
+            {isAddingToCart ? "Adding..." : "Add to Cart"}
+          </Button>
         </div>
       </CardContent>
     </Card>
   )
 }
-

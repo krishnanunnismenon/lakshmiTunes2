@@ -28,6 +28,9 @@ import PaymentSuccessPage from "./pages/user/PaymentSuccessPage";
 import OrdersPage from "./pages/admin/OrdersPage";
 import IndividualOrderPage from "./pages/admin/IndividualOrderPage";
 import UserIndividualOrderPage from "./pages/user/UserIndividualOrderPage";
+import OffersPage from "./pages/admin/OffersPage";
+import AddNewOfferPage from "./pages/admin/AddNewOfferPage";
+import EditOfferPage from "./pages/admin/EditOfferPage";
 
 const App = () => {
   const GoogleAuthSignWrapper = () => {
@@ -92,6 +95,10 @@ const App = () => {
 
         <Route path="admin/orders" element={<OrdersPage/>}/>
         <Route path="admin/orders/:individualOrder" element={<IndividualOrderPage/>}/>
+
+        <Route path="admin/offers" element={<OffersPage/>}/>
+        <Route path="admin/offers/add" element={<AddNewOfferPage/>}/>
+        <Route path="admin/offers/edit/:id" element={<EditOfferPage/>}/>
         
         
         </Route>

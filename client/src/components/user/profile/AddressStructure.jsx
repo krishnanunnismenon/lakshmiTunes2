@@ -11,14 +11,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useGetUserAddressQuery, useAddUserAddressMutation, useUpdatePrimaryAddressMutation, useUpdateUserAddressMutation, useDeleteUserAddressMutation } from '@/services/api/user/userApi';
 import { useToast } from '@/hooks/use-toast';
 
+const nonEmptyString = (value) => {
+  return value && value.trim().length > 0;
+};
+
 const addressSchema = Yup.object().shape({
-  name: Yup.string().required('Name is required'),
-  house: Yup.string().required('House/Street is required'),
-  city: Yup.string().required('City is required'),
-  state: Yup.string().required('State is required'),
-  pincode: Yup.string().required('Pincode is required'),
-  country: Yup.string().required('Country is required'),
-  phone: Yup.number().typeError('Phone must be a number').required('Phone number is required'),
+  name: Yup.string().required('Name is required').test('non-empty', 'Name cannot be empty or just whitespace', nonEmptyString),
+  house: Yup.string().required('House/Street is required').test('non-empty', 'House cannot be empty or just whitespace', nonEmptyString),
+  city: Yup.string().required('City is required').test('non-empty', 'City cannot be empty or just whitespace', nonEmptyString),
+  state: Yup.string().required('State is required').test('non-empty', 'State cannot be empty or just whitespace', nonEmptyString),
+  pincode: Yup.string().required('Pincode is required').test('non-empty', 'Pincode cannot be empty or just whitespace', nonEmptyString),
+  country: Yup.string().required('Country is required').test('non-empty', 'Country cannot be empty or just whitespace', nonEmptyString),
+  phone: Yup.number().typeError('Phone must be a number')
 });
 
 const AddressStructure = () => {

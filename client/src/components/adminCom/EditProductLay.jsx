@@ -1,11 +1,11 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { Formik, Form, Field } from 'formik'
 import * as Yup from 'yup'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useUpdateProductMutation, useGetCategoriesQuery } from '@/services/api/admin/adminApi'
-import { X } from 'lucide-react'
+import { X, Edit } from 'lucide-react'
 import ReactCrop from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import { useToast } from '@/hooks/use-toast' 
@@ -16,6 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
@@ -29,12 +35,16 @@ const validationSchema = Yup.object().shape({
 })
 
 export default function EditProduct({ product }) {
+  console.log('This is product',product.category.name)
   const [updateProduct, { isLoading }] = useUpdateProductMutation()
   const { data: categories, isLoading: isCategoriesLoading } = useGetCategoriesQuery()
-  const [images, setImages] = useState(product.images || [])
+  
+  const [images, setImages] = useState(product.images.map(img => ({ preview: img, file: null })) || [])
   const [currentImage, setCurrentImage] = useState(null)
   const [crop, setCrop] = useState({ unit: '%', width: 30, aspect: 1 })
   const [completedCrop, setCompletedCrop] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingImageIndex, setEditingImageIndex] = useState(null)
   const imageRef = useRef(null)
   const [error, setError] = useState('')
   
@@ -53,6 +63,7 @@ export default function EditProduct({ product }) {
         reader.onload = () => {
           setCurrentImage(reader.result)
           setCrop({ unit: '%', width: 30, aspect: 1 })
+          setIsModalOpen(true)
         }
         reader.readAsDataURL(file)
       } else {
@@ -68,10 +79,18 @@ export default function EditProduct({ product }) {
   const handleCropSubmit = () => {
     if (imageRef.current && completedCrop?.width && completedCrop?.height) {
       const croppedImageUrl = getCroppedImg(imageRef.current, completedCrop)
-      const newImages = [...images, { file: dataURLtoFile(croppedImageUrl, 'cropped-image.jpg') }]
-      setImages(newImages)
+      if (editingImageIndex !== null) {
+        const newImages = [...images]
+        newImages[editingImageIndex] = { preview: croppedImageUrl, file: dataURLtoFile(croppedImageUrl, 'cropped-image.jpg') }
+        setImages(newImages)
+      } else {
+        const newImages = [...images, { preview: croppedImageUrl, file: dataURLtoFile(croppedImageUrl, 'cropped-image.jpg') }]
+        setImages(newImages)
+      }
       setCurrentImage(null)
       setCompletedCrop(null)
+      setIsModalOpen(false)
+      setEditingImageIndex(null)
     }
   }
 
@@ -114,40 +133,37 @@ export default function EditProduct({ product }) {
     setImages((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const editImage = (index) => {
+    setCurrentImage(images[index].preview)
+    setEditingImageIndex(index)
+    setIsModalOpen(true)
+  }
+
   const handleSubmit = async (values, { setSubmitting }) => {
-    const productData = new FormData()
-    for(const key in values){
-      productData.append(key, values[key])
-    }
-   
-    images.forEach((image, index) => {
-      if (image.file) {
-        productData.append(`images`, image.file)
-      } else {
-        productData.append(`existingImages`, image)
-      }
-    })
+    
+    
 
     try {
-      const result = await updateProduct({ id: product._id, productData }).unwrap()
-      console.log('Product updated successfully:', result)
+      const result = await updateProduct({ id: product._id, productData:values }).unwrap();
+      console.log('Product updated successfully:', result);
       
       toast({
         description: result.message || "Product updated successfully",
         duration: 3000,
         className: "bg-green-500 text-white",
-      })
+      });
     } catch (error) {
-      console.error('Failed to update product:', error)
+      console.error('Failed to update product:', error);
       toast({
         description: error.data?.message || "Failed to update product",
         duration: 3000,
         className: "bg-red-500 text-white",
-      })
+      });
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
+
 
   return (
     <div className="min-h-screen bg-black p-6">
@@ -160,13 +176,14 @@ export default function EditProduct({ product }) {
             price: product.price,
             stock: product.stock,
             description: product.description,
-            category: product.category,
+            category: product.category.name,
             brand: product.brand
           }}
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
+          enableReinitialize
         >
-          {({ errors, touched, setFieldValue }) => (
+          {({ errors, touched, setFieldValue, values }) => (
             <Form className="space-y-4">
               <div>
                 <label className="text-gray-400 text-sm">Product name</label>
@@ -220,7 +237,7 @@ export default function EditProduct({ product }) {
                   <label htmlFor="category" className="text-gray-400 text-sm">Category</label>
                   <Select 
                     onValueChange={(value) => setFieldValue('category', value)}
-                    defaultValue={product.category}
+                    value={values.category}
                     name="category"
                   >
                     <SelectTrigger className="bg-[#2a2b2e] border-gray-700 text-white">
@@ -230,8 +247,8 @@ export default function EditProduct({ product }) {
                       {isCategoriesLoading ? (
                         <SelectItem value="loading">Loading categories...</SelectItem>
                       ) : categories?.length > 0 ? (
-                        categories.map((category) => (
-                          <SelectItem key={category._id} value={category._id}>
+                        categories.map((category,index) => (
+                          <SelectItem key={index} value={category._id}>
                             {category.name}
                           </SelectItem>
                         ))
@@ -265,48 +282,26 @@ export default function EditProduct({ product }) {
                 />
                 {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
                 
-                {currentImage && (
-                  <div className="mt-4">
-                    <ReactCrop
-                      src={currentImage}
-                      crop={crop}
-                      onChange={(newCrop) => setCrop(newCrop)}
-                      onComplete={onCropComplete}
-                    >
-                      <img ref={imageRef} src={currentImage} alt="Crop me" />
-                    </ReactCrop>
-                    <div className="mt-2 space-x-2">
-                      <Button
-                        onClick={handleCropSubmit}
-                        className="bg-green-500 hover:bg-green-600 text-white"
-                        disabled={!completedCrop?.width || !completedCrop?.height}
-                      >
-                        Submit Crop
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setCurrentImage(null)
-                          setCompletedCrop(null)
-                        }}
-                        className="bg-red-500 hover:bg-red-600 text-white"
-                      >
-                        Cancel Crop
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex flex-wrap gap-2 mt-2">
                   {images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img src={image.file ? URL.createObjectURL(image.file) : image} alt={`Product ${index + 1}`} className="w-20 h-20 object-cover rounded" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                    <div key={index} className="relative group">
+                      <img src={image.preview} alt={`Product ${index + 1}`} className="w-20 h-20 object-cover rounded" />
+                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => editImage(index)}
+                          className="text-white mr-2"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="text-white"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -323,6 +318,46 @@ export default function EditProduct({ product }) {
           )}
         </Formik>
       </div>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="bg-[#1a1b1e] text-white">
+          <DialogHeader>
+            <DialogTitle>{editingImageIndex !== null ? 'Edit Image' : 'Crop Image'}</DialogTitle>
+          </DialogHeader>
+          {currentImage && (
+            <div className="mt-4">
+              <ReactCrop
+                src={currentImage}
+                crop={crop}
+                onChange={(newCrop) => setCrop(newCrop)}
+                onComplete={onCropComplete}
+              >
+                <img ref={imageRef} src={currentImage} alt="Crop me" />
+              </ReactCrop>
+              <div className="mt-2 space-x-2">
+                <Button
+                  onClick={handleCropSubmit}
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  disabled={!completedCrop?.width || !completedCrop?.height}
+                >
+                  Submit Crop
+                </Button>
+                <Button
+                  onClick={() => {
+                    setCurrentImage(null)
+                    setCompletedCrop(null)
+                    setIsModalOpen(false)
+                    setEditingImageIndex(null)
+                  }}
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

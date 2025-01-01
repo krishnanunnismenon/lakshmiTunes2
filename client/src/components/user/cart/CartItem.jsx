@@ -31,6 +31,10 @@ export default function CartItem({ item }) {
     }
   }
 
+  const originalPrice = item.product.price * quantity
+  const discountedPrice = item.product.discountedPrice ? item.product.discountedPrice * quantity : originalPrice
+  const discount = originalPrice - discountedPrice
+
   return (
     <div className="grid grid-cols-12 gap-4 p-4 items-center">
       <div className="col-span-6 flex gap-4">
@@ -79,7 +83,7 @@ export default function CartItem({ item }) {
             variant="outline"
             size="icon"
             onClick={() => handleQuantityChange(quantity + 1)}
-            disabled={quantity >= item.product.stock || quantity>=5 ||isUpdating}
+            disabled={quantity >= item.product.stock || quantity >= 5 || isUpdating}
           >
             <Plus className="w-4 h-4" />
           </Button>
@@ -87,9 +91,14 @@ export default function CartItem({ item }) {
       </div>
 
       <div className="col-span-3 text-right">
-        ₹{(item.product.price * quantity).toFixed(2)}
+        <div className="text-lg font-semibold">₹{discountedPrice.toFixed(2)}</div>
+        {discount > 0 && (
+          <div className="text-sm text-gray-500">
+            <span className="line-through">₹{originalPrice.toFixed(2)}</span>
+            <span className="text-green-500 ml-2">Save ₹{discount.toFixed(2)}</span>
+          </div>
+        )}
       </div>
     </div>
   )
 }
-

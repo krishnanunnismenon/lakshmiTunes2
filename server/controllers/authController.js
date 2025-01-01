@@ -172,16 +172,16 @@ export const googleLogin = async (req, res) => {
   
         const { tokens } = await oAuth2client.getToken(code);
         oAuth2client.setCredentials(tokens);
-        console.log(tokens)
-     
+        
         const oauth2 = google.oauth2('v2');
         const { data: userInfo } = await oauth2.userinfo.get({ auth: oAuth2client });
-
+        
         if (!userInfo) {
             return res.status(400).json({ message: 'Failed to fetch user information' });
         }
         
-
+        
+        console.log('tokens')
         
         const { email, name, picture } = userInfo;
 

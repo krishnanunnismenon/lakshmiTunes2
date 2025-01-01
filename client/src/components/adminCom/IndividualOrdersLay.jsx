@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useGetIndividualOrderDetailQuery, useUpdateOrderItemStatusMutation } from '@/services/api/admin/orderApi';
+import { useGetIndividualOrderDetailQuery, useUpdateOrderItemStatusMutation,useUpdateOrderStatusMutation } from '@/services/api/admin/orderApi';
 
 const statusColors = {
   'pending': 'text-orange-500',
@@ -34,6 +34,8 @@ export default function IndividualOrdersLay() {
   const navigate = useNavigate();
   const { data: order, isLoading, error } = useGetIndividualOrderDetailQuery(individualOrder);
   const [updateItemStatus, { isLoading: isUpdating }] = useUpdateOrderItemStatusMutation();
+  const [updateStatus] = useUpdateOrderStatusMutation()
+  
   const { toast } = useToast();
 
   const handleItemStatusUpdate = async (itemId, newStatus) => {
@@ -111,6 +113,19 @@ export default function IndividualOrdersLay() {
             <div className="flex items-center gap-2">
               <span className={statusColors[orderStatus]}>
                 {orderStatus.charAt(0).toUpperCase() + orderStatus.slice(1)}
+                <Select>
+                
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Change status" />
+                    </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                </Select>
               </span>
             </div>
           </div>

@@ -12,6 +12,10 @@ export default function OrderDetails({ orderId }) {
   if (error) return <div>Error loading order details</div>;
   if (!order) return null;
 
+  const mrpTotal = order.items.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  const subtotal = order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const discount = mrpTotal - subtotal;
+
   return (
     <Card>
       <CardHeader>
@@ -20,15 +24,23 @@ export default function OrderDetails({ orderId }) {
       <CardContent className="space-y-4">
         {order.items.map((item) => (
           <div key={item.product._id} className="flex justify-between">
-            <span>{item.product.name}</span>
-            <span>₹{item.price * item.quantity}</span>
+            <span>{item.product.name} (x{item.quantity})</span>
+            <span>₹{(item.price * item.quantity).toFixed(2)}</span>
           </div>
         ))}
 
         <div className="border-t pt-4">
           <div className="flex justify-between">
+            <span>MRP Total</span>
+            <span>₹{mrpTotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-green-500">
+            <span>Discount</span>
+            <span>- ₹{discount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
             <span>Sub Total</span>
-            <span>₹{order.total}</span>
+            <span>₹{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
             <span>Shipping</span>
@@ -36,7 +48,7 @@ export default function OrderDetails({ orderId }) {
           </div>
           <div className="flex justify-between font-semibold text-lg mt-4">
             <span>Order Total</span>
-            <span>₹{order.total}</span>
+            <span>₹{order.total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -58,4 +70,3 @@ export default function OrderDetails({ orderId }) {
     </Card>
   );
 }
-

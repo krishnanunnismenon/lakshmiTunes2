@@ -68,6 +68,20 @@ const cartApi = userApi.injectEndpoints({
                 body:data
             }),
             invalidatesTags:['Order']
+        }),
+        createRazorpayOrder:builder.mutation({
+            query:(orderData)=>({
+                url:'user/cart/payment/create-razorpay-order',
+                method:"POST",
+                body:orderData
+            })
+        }),
+        verifyRazorpayOrder:builder.mutation({
+            query:(paymentData)=>({
+                url: 'user/cart/payment/verify-razorpay-order',
+                method: 'POST',
+                body: paymentData,
+            })
         })
 
     })
@@ -76,4 +90,5 @@ const cartApi = userApi.injectEndpoints({
 export const {useGetCartQuery,useClearCartMutation,useUpdateCartMutation,useApplyCouponMutation,
     useUpdateCartItemMutation,useRemoveFromCartMutation,
     useCreateOrderMutation,
-    useGetOrderDetailsQuery,useProcessPaymentMutation} = cartApi
+    useGetOrderDetailsQuery,useProcessPaymentMutation,
+    useCreateRazorpayOrderMutation,useVerifyRazorpayOrderMutation} = cartApi

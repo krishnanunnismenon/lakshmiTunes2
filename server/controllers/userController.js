@@ -1,6 +1,7 @@
 import { Product } from "../models/productModel.js";
 import TempUser from "../models/tempUserModel.js";
 import User from "../models/userModel.js";
+import bcrypt from 'bcryptjs'
 import { generateOtp, sendOTPEmail } from "../utils/generateOTP.js";
 
 
@@ -126,9 +127,33 @@ export const verifyOtp = async(req,res)=>{
   }
 }
 
+export const changePassword = async(req,res)=>{
+  try {
+    const user = await User.findById(req.user.userId);
+    if(!user){
+      return res.status(404).json({message:"User not found"})
+    }
+    const passwordData = req.body;
+    console.log(passwordData)
+    const correctPassword = await bcrypt.compare(passwordData.currentPassword,user.password);
+    if(correctPassword){
+      let hashedPassword = await bcrypt.hash(passwordData.newPassword,10)
+      user.password = hashedPassword
+      await user.save() 
+      res.status(200).json({message:"Password changed"})
+    }else{
+      res.status(400).json({message:"New Password not entered"})
+    }
+
+    
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+}
+
 export const getUserAddress = async(req,res)=>{
   try {
-    console.log(req.user.userId)
+    
     const user = await User.findById(req.user.userId);
     if(!user){
       return res.status(404).json({ message: 'User not found' });

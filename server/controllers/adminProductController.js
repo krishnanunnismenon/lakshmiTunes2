@@ -89,11 +89,13 @@ export const updateStatus = async (req, res) => {
 };
 
 
-export const editProduct = async(req,res)=>{
+export const editProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
     const files = req.files;
+    console.log('Update Data:', updateData);
+    console.log('Files:', files);
 
     let product = await Product.findById(id);
 
@@ -129,6 +131,14 @@ export const editProduct = async(req,res)=>{
       files.forEach(file => fs.unlinkSync(file.path));
     }
 
+    // Handle existing images
+    if (updateData.existingImages) {
+      const existingImages = Array.isArray(updateData.existingImages) 
+        ? updateData.existingImages 
+        : [updateData.existingImages];
+      product.images = [...product.images, ...existingImages];
+    }
+
     // Validate the product before saving
     const validationError = product.validateSync();
     if (validationError) {
@@ -139,8 +149,6 @@ export const editProduct = async(req,res)=>{
       });
     }
 
-    console.log(product)
-    // Save updated product
     await product.save();
 
     res.status(200).json({ 
@@ -154,5 +162,4 @@ export const editProduct = async(req,res)=>{
       error: error.message 
     });
   }
-
-}
+};

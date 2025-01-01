@@ -134,7 +134,7 @@ const handleUpdateProfile = async (event) => {
     try {
         await changePassword({
             currentPassword: formData.get('currentPassword'),
-        newPassword: formData.get('newPassword')
+            newPassword: formData.get('newPassword')
       }).unwrap();
       setIsChangingPassword(false);
       toast({
@@ -314,10 +314,10 @@ const handleUpdateProfile = async (event) => {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center">
-                    {/* <div>
+                    <div>
                       <h3 className="font-semibold">Wallet Balance</h3>
-                      <p className="text-2xl font-bold mt-2">₹{user.walletBalance || 0}</p>
-                    </div> */}
+                      <p className="text-2xl font-bold mt-2">₹{user?.walletBalance || 0}</p>
+                    </div>
                     <Button variant="outline">Add Money</Button>
                   </div>
                 </CardContent>

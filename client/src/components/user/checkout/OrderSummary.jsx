@@ -10,11 +10,15 @@ export default function OrderSummary({ cart, selectedAddress }) {
   const { toast } = useToast()
   const navigate = useNavigate()
   
-  const subtotal = cart?.reduce((total, item) => 
+  const mrp = cart?.reduce((total, item) => 
     total + (item.product.price * item.quantity), 0
   ) || 0
- 
 
+  const subtotal = cart?.reduce((total, item) => 
+    total + ((item.product.discountedPrice || item.product.price) * item.quantity), 0
+  ) || 0
+
+  const discount = mrp - subtotal
   const shipping = 0 
   const total = subtotal + shipping
 
@@ -29,18 +33,14 @@ export default function OrderSummary({ cart, selectedAddress }) {
     }
 
     try {
-
       const order = await createOrder({
         addressId: selectedAddress._id,
         items: cart?.map(item => ({
           product: item.product._id,
           quantity: item.quantity
         }))
-        
       }).unwrap()
      
-
-      
       navigate(`/payment/${order._id}`)
     } catch (error) {
       toast({
@@ -58,23 +58,31 @@ export default function OrderSummary({ cart, selectedAddress }) {
       <div className="space-y-4">
         {cart?.items?.map((item) => (
           <div key={item.product._id} className="flex justify-between">
-            <span>{item.product.name}</span>
-            <span>${item.product.price * item.quantity}</span>
+            <span>{item.product.name} (x{item.quantity})</span>
+            <span>₹{((item.product.discountedPrice || item.product.price) * item.quantity).toFixed(2)}</span>
           </div>
         ))}
 
         <div className="border-t pt-4">
           <div className="flex justify-between">
+            <span>MRP Total</span>
+            <span>₹{mrp.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-green-500">
+            <span>Discount</span>
+            <span>- ₹{discount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
             <span>Sub Total</span>
-            <span>${subtotal?.toFixed(2)}</span>
+            <span>₹{subtotal.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
             <span>Shipping</span>
-            <span>{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
+            <span>{shipping === 0 ? 'Free' : `₹${shipping.toFixed(2)}`}</span>
           </div>
           <div className="flex justify-between font-semibold text-lg mt-4">
             <span>Order Total</span>
-            <span>${total.toFixed(2)}</span>
+            <span>₹{total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -92,4 +100,3 @@ export default function OrderSummary({ cart, selectedAddress }) {
     </Card>
   )
 }
-
