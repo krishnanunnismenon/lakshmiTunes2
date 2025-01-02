@@ -1,4 +1,4 @@
-import { application } from "express";
+
 import Offer from "../../models/offerModel.js"
 import { Product } from "../../models/productModel.js";
 

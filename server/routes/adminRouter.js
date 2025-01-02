@@ -5,6 +5,8 @@ import { blockUser, userList } from '../controllers/userListController.js';
 import { addCategory, deleteCategory, editCategory, listCategories, toggleListing } from '../controllers/categoriesController.js';
 import adminOrderRouter from './admin/adminOrderRouter.js';
 import adminOfferRouter from './admin/adminOfferRouter.js';
+import adminCouponRouter from './admin/adminCouponRouter.js';
+import adminDashboardRouter from './admin/adminDashboardRouter.js';
 
 const adminRouter = express.Router();
 
@@ -26,5 +28,7 @@ adminRouter.delete('/categories/:categoryId',deleteCategory)
 adminRouter.use('/products',verifyToken,verifyRole(['admin']),productRouter)
 adminRouter.use('/orders',verifyToken,verifyRole(['admin']),adminOrderRouter)
 adminRouter.use('/offers',verifyToken,verifyRole(['admin']),adminOfferRouter)
+adminRouter.use('/coupons',verifyToken,verifyRole(['admin']),adminCouponRouter)
+adminRouter.use('/dashboard',verifyToken,verifyRole(['admin']),adminDashboardRouter)
 
 export default adminRouter;

@@ -31,6 +31,7 @@ import UserIndividualOrderPage from "./pages/user/UserIndividualOrderPage";
 import OffersPage from "./pages/admin/OffersPage";
 import AddNewOfferPage from "./pages/admin/AddNewOfferPage";
 import EditOfferPage from "./pages/admin/EditOfferPage";
+import CouponsPage from "./pages/admin/CouponsPage";
 
 const App = () => {
   const GoogleAuthSignWrapper = () => {
@@ -99,6 +100,8 @@ const App = () => {
         <Route path="admin/offers" element={<OffersPage/>}/>
         <Route path="admin/offers/add" element={<AddNewOfferPage/>}/>
         <Route path="admin/offers/edit/:id" element={<EditOfferPage/>}/>
+
+        <Route path="admin/coupons" element={<CouponsPage/>}/>
         
         
         </Route>
